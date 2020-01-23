@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Moodo</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="today">Heute</string>
+    <string name="tomorrow">Morgen</string>
+    <string name="soon">Bald</string>
+    <string name="later">Irgendwann</string>
+
+</resources>

@@ -1,0 +1,21 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="date"
+            type="java.time.LocalDate" />
+    </data>
+
+    <TextView
+        android:id="@+id/header_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
+        android:padding="8dp"
+        android:textAlignment="center"
+        app:dateRelativeFormatted="@{date}"
+        tools:text="Header"></TextView>
+</layout>
