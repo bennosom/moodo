@@ -5,6 +5,17 @@
     <string name="today">Heute</string>
     <string name="tomorrow">Morgen</string>
     <string name="soon">Bald</string>
-    <string name="later">Irgendwann</string>
+    <string name="later">Später</string>
+    <string name="shift_by_one_day">1 Tag</string>
+    <string name="shift_by_two_days">2 Tage</string>
+    <string name="shift_by_one_week">1 Woche</string>
+    <string name="shift_by_one_month">1 Monat</string>
 
+    <string name="task_modify">Save</string>
+
+    <string name="notification_action_task_done">Done</string>
+    <string name="notification_action_task_shift">Shift</string>
+    <string name="add">Add</string>
+    <string name="todo">Task description</string>
+    <string name="add_task">Add task</string>
 </resources>

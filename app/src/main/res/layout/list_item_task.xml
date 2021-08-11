@@ -1,48 +1,35 @@
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:clickable="true"
+    android:focusable="true">
 
-    <data>
-
-        <variable
-            name="task"
-            type="bex.bootcamp.moodo.domain.Task" />
-    </data>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <!-- android:background="@{task.doneDate != null ? @color/task_done : @color/white}" -->
 
         <TextView
-            android:id="@+id/task_title"
-            android:layout_width="wrap_content"
+            android:id="@+id/description_text"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
+            android:paddingHorizontal="16dp"
             android:paddingTop="16dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="16dp"
-            android:text="@{task.title}"
-            android:textAlignment="textStart"
-            android:textSize="24sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="parent"
-            tools:text="Task title" />
+            android:text="@{task.description}"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            tools:text="MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM" />
 
         <TextView
-            android:id="@+id/task_due_date"
+            android:id="@+id/due_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="4dp"
-            android:textAlignment="textEnd"
-            android:textColor="#46000000"
-            android:textSize="14sp"
-            android:textStyle="italic"
-            app:dateTimeFormatted="@{task.due}"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Due date" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</layout>
+            android:layout_gravity="end"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="4dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            tools:text="MMMMMMMMMMMMMM" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

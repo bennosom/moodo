@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/listFragment">
+    app:startDestination="@id/tasklistFragment">
     <fragment
-        android:id="@+id/listFragment"
-        android:name="bex.bootcamp.moodo.tasklist.TaskListFragment"
-        android:label="ListFragment" />
+        android:id="@+id/tasklistFragment"
+        android:name="bex.bootcamp.moodo.ui.tasks.TaskListFragment"
+        android:label="ListFragment"
+        tools:layout="@layout/fragment_task_list">
+        <action
+            android:id="@+id/action_listFragment_to_taskFragment"
+            app:destination="@+id/taskFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/taskEditFragment"
+        android:name="bex.bootcamp.moodo.ui.tasks.task.TaskEditFragment"
+        android:label="TaskEditFragment"
+        tools:layout="@layout/fragment_task" />
 </navigation>
