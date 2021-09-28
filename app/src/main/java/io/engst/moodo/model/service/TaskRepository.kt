@@ -11,19 +11,20 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 class TaskRepository(private val taskDao: TaskDao) {
+
     val tasks: LiveData<List<Task>> = Transformations.map(taskDao.getTasks()) {
         it.asDomainModel()
+    }
+
+    suspend fun getNextTaskId(): Long {
+        return withContext(Dispatchers.IO) {
+            taskDao.addTask(TaskEntity.from(Task()))
+        }
     }
 
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
             taskDao.updateTask(TaskEntity.from(task))
-        }
-    }
-
-    suspend fun addTask(task: Task) {
-        withContext(Dispatchers.IO) {
-            taskDao.addTask(TaskEntity.from(task))
         }
     }
 

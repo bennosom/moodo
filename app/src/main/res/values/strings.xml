@@ -18,4 +18,6 @@
     <string name="add">Add</string>
     <string name="todo">Task description</string>
     <string name="add_task">Add task</string>
+    <string name="remove">Delete</string>
+    <string name="task_description_hint">To do...</string>
 </resources>

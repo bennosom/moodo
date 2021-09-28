@@ -4,15 +4,14 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
@@ -39,9 +38,18 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
     private val viewModel: TaskViewModel by viewModel()
 
+    private lateinit var binding: FragmentTaskEditBinding
+
+    private var saveOnDismiss: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(DialogFragment.STYLE_NORMAL, R.style.DialogStyle)
+
+        if (task != null) {
+            viewModel.description = task.description
+            viewModel.dueDate = task.dueDate
+        }
     }
 
     override fun onCreateView(
@@ -49,86 +57,9 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentTaskEditBinding.inflate(inflater, container, false)
+        binding = FragmentTaskEditBinding.inflate(inflater, container, false)
 
-        task?.let {
-            viewModel.description = task.description
-            viewModel.dueDate = task.dueDate
-        }
-
-        binding.descriptionText.setText(viewModel.description)
-        binding.addButton.text = getString(R.string.task_modify)
-        binding.calendarView.updateDate(
-            viewModel.dueDate.year,
-            viewModel.dueDate.monthValue - 1,
-            viewModel.dueDate.dayOfMonth
-        )
-        binding.timePicker.hour = viewModel.dueDate.hour
-        binding.timePicker.minute = viewModel.dueDate.minute
-
-        binding.descriptionText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.description = s.toString()
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-            }
-        })
-
-        binding.addButton.setOnClickListener {
-            saveTask()
-            dismiss()
-        }
-
-        binding.calendarView.setOnDateChangedListener { _, year, monthOfYear, dayOfMonth ->
-            val date = LocalDateTime.of(
-                LocalDate.of(year, monthOfYear + 1, dayOfMonth),
-                viewModel.dueDate.toLocalTime()
-            )
-            viewModel.dueDate = date
-        }
-
-        binding.timePicker.setIs24HourView(true)
-        binding.timePicker.setOnTimeChangedListener { _, hour, minute ->
-            val date = LocalDateTime.of(
-                viewModel.dueDate.toLocalDate(),
-                LocalTime.of(hour, minute)
-            )
-            viewModel.dueDate = date
-        }
-
-        return binding.root
-    }
-
-
-    override fun onDismiss(dialog: DialogInterface) {
-        saveTask()
-        super.onDismiss(dialog)
-    }
-
-    private fun saveTask() {
-        if (task != null) {
-            val updatedTask = task.copy(
-                description = viewModel.description,
-                dueDate = viewModel.dueDate
-            )
-            viewModel.updateTask(updatedTask)
-            schedule(updatedTask)
-        } else {
-            val newTask =
-                Task(null, viewModel.description, viewModel.dueDate, viewModel.dueDate, null, 0, 0)
-            viewModel.addTask(newTask)
-            schedule(newTask)
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        val chipGroup = view.findViewById<ChipGroup>(R.id.due_date_chips)
+        val chipGroup = binding.root.findViewById<ChipGroup>(R.id.due_date_chips)
         DateShift.values().forEach {
             val chip = Chip(
                 ContextThemeWrapper(
@@ -156,12 +87,108 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         }
         chipGroup.addView(chip)
 
-        val textInput = view.findViewById<TextView>(R.id.description_text)
-        textInput.requestFocus()
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        task?.let {
+            binding.removeButton.text = "Delete"
+            binding.removeButton.setTextColor(Color.RED)
+        } ?: Unit.let {
+            binding.removeButton.text = "Cancel"
+            binding.removeButton.setTextColor(Color.BLACK)
+        }
+        binding.descriptionText.editText?.setText(viewModel.description)
+        binding.calendarView.updateDate(
+            viewModel.dueDate.year,
+            viewModel.dueDate.monthValue - 1,
+            viewModel.dueDate.dayOfMonth
+        )
+        binding.timePicker.hour = viewModel.dueDate.hour
+        binding.timePicker.minute = viewModel.dueDate.minute
+
+        binding.descriptionText.editText?.doOnTextChanged { text, _, _, _ ->
+            viewModel.description = text.toString()
+        }
+
+        binding.removeButton.setOnClickListener {
+            saveOnDismiss = false
+            dismiss()
+        }
+
+        binding.calendarView.setOnDateChangedListener { _, year, monthOfYear, dayOfMonth ->
+            val date = LocalDateTime.of(
+                LocalDate.of(year, monthOfYear + 1, dayOfMonth),
+                viewModel.dueDate.toLocalTime()
+            )
+            viewModel.dueDate = date
+        }
+
+        binding.timePicker.setIs24HourView(true)
+        binding.timePicker.setOnTimeChangedListener { _, hour, minute ->
+            val date = LocalDateTime.of(
+                viewModel.dueDate.toLocalDate(),
+                LocalTime.of(hour, minute)
+            )
+            viewModel.dueDate = date
+        }
+
+        binding.descriptionText.editText?.requestFocus()
 
         val inputMethodManager: InputMethodManager? =
             requireContext().getSystemService(InputMethodManager::class.java)
-        inputMethodManager?.showSoftInput(textInput, InputMethodManager.SHOW_IMPLICIT)
+        inputMethodManager?.showSoftInput(
+            binding.descriptionText.editText,
+            InputMethodManager.SHOW_IMPLICIT
+        )
+    }
+
+    override fun onResume() {
+        saveOnDismiss = true
+        super.onResume()
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        if (saveOnDismiss) {
+            if (viewModel.description.isNotBlank()) {
+                saveTask()
+            } else {
+                deleteTask()
+            }
+        } else {
+            deleteTask()
+        }
+        super.onDismiss(dialog)
+    }
+
+    private fun saveTask() {
+        val task = if (task != null) {
+            val updatedTask = task.copy(
+                description = viewModel.description,
+                dueDate = viewModel.dueDate
+            )
+            viewModel.updateTask(updatedTask)
+            // TODO: unschedule former task
+            updatedTask
+        } else {
+            val newTask = Task(
+                description = viewModel.description,
+                createdDate = LocalDateTime.now(),
+                dueDate = viewModel.dueDate
+            )
+            viewModel.addTask(newTask)
+            newTask
+        }
+        schedule(task)
+    }
+
+    private fun deleteTask() {
+        if (task != null) {
+            viewModel.deleteTask(task)
+            // TODO: unschedule deleted task
+        }
     }
 
     private fun schedule(task: Task) {

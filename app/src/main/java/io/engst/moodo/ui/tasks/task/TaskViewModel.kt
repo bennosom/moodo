@@ -15,13 +15,24 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
-            taskRepository.addTask(task)
+            val nextTaskId = taskRepository.getNextTaskId()
+            taskRepository.updateTask(
+                task.copy(
+                    id = nextTaskId
+                )
+            )
         }
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.updateTask(task)
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.deleteTask(task)
         }
     }
 }
