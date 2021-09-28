@@ -2,9 +2,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="io.engst.moodo.ui.MainActivity">
+
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/backup"
+        android:title="@string/backup"
+        android:contentDescription="@string/content_description_backup"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/restore"
+        android:title="@string/restore"
+        android:contentDescription="@string/content_description_restore"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/about"
+        android:title="@string/about"
+        android:contentDescription="@string/content_description_about"
+        app:showAsAction="never" />
 </menu>

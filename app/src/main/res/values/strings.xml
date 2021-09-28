@@ -19,5 +19,12 @@
     <string name="todo">Task description</string>
     <string name="add_task">Add task</string>
     <string name="remove">Delete</string>
-    <string name="task_description_hint">To do...</string>
+    <string name="task_description_hint">To do…</string>
+    <string name="backup">Backup</string>
+    <string name="info">About</string>
+    <string name="content_description_backup">Backup database to file</string>
+    <string name="content_description_about">About Moodo</string>
+    <string name="about">About</string>
+    <string name="restore">Restore</string>
+    <string name="content_description_restore">Restore database from file</string>
 </resources>
