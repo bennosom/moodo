@@ -19,7 +19,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class TaskListFragment : Fragment() {
-    private val logger: Logger by injectLogger()
+    private val logger: Logger by injectLogger("view")
 
     private val viewModel: TaskListViewModel by viewModel()
 
@@ -115,7 +115,7 @@ class TaskListFragment : Fragment() {
         }
 
         val items = doneList + todoList
-        logger.debug { "updateTaskList items=$items" }
+        logger.debug { "list items changed: ${items.map { it.id }}" }
         taskListAdapter?.submitList(items)
     }
 

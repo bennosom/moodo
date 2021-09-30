@@ -5,19 +5,19 @@
 
     <item
         android:id="@+id/backup"
-        android:title="@string/backup"
-        android:contentDescription="@string/content_description_backup"
+        android:title="@string/action_backup"
+        android:contentDescription="@string/action_description_backup"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/restore"
-        android:title="@string/restore"
-        android:contentDescription="@string/content_description_restore"
+        android:title="@string/action_restore"
+        android:contentDescription="@string/action_description_restore"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/about"
-        android:title="@string/about"
-        android:contentDescription="@string/content_description_about"
+        android:title="@string/action_info"
+        android:contentDescription="@string/action_description_about"
         app:showAsAction="never" />
 </menu>

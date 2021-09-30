@@ -22,6 +22,12 @@ class TaskRepository(private val taskDao: TaskDao) {
         }
     }
 
+    suspend fun addTask(task: Task) {
+        return withContext(Dispatchers.IO) {
+            taskDao.addTask(TaskEntity.from(task))
+        }
+    }
+
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
             taskDao.updateTask(TaskEntity.from(task))

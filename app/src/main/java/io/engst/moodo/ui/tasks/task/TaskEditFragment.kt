@@ -6,35 +6,53 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.format.DateFormat.is24HourFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
 import io.engst.moodo.headless.AlarmBroadcastReceiver
-import io.engst.moodo.model.api.DateShift
+import io.engst.moodo.model.api.DateSuggestion
 import io.engst.moodo.model.api.ExtraDescription
 import io.engst.moodo.model.api.ExtraId
 import io.engst.moodo.model.api.Task
+import io.engst.moodo.model.api.TimeSuggestion
+import io.engst.moodo.model.api.textId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+
+val LocalDateTime.prettyFormat: String
+    get() = format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
+
+val LocalDate.prettyFormat: String
+    get() = format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+
+val LocalTime.prettyFormat: String
+    get() = format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+
 
 class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
-    private val logger: Logger by injectLogger()
+    private val logger: Logger by injectLogger("view")
 
     private val viewModel: TaskViewModel by viewModel()
 
@@ -47,8 +65,9 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         setStyle(DialogFragment.STYLE_NORMAL, R.style.DialogStyle)
 
         if (task != null) {
-            viewModel.description = task.description
-            viewModel.dueDate = task.dueDate
+            viewModel.taskText = task.description
+            viewModel.taskDate = task.dueDate.toLocalDate()
+            viewModel.taskTime = task.dueDate.toLocalTime()
         }
     }
 
@@ -59,58 +78,187 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     ): View {
         binding = FragmentTaskEditBinding.inflate(inflater, container, false)
 
-        val chipGroup = binding.root.findViewById<ChipGroup>(R.id.due_date_chips)
-        DateShift.values().forEach {
-            val chip = Chip(
-                ContextThemeWrapper(
-                    requireContext(),
-                    R.style.Widget_MaterialComponents_Chip_Choice
-                )
-            ).apply {
-                text = it.name
-            }
-            chipGroup.addView(chip)
-        }
-        val chip = Chip(
-            ContextThemeWrapper(
-                requireContext(),
-                R.style.Widget_MaterialComponents_Chip_Choice
-            )
-        ).apply {
-            text = "specify exact date"
-            setOnClickListener {
-                MaterialAlertDialogBuilder(context)
-                    // Add customization options here
-                    .setTitle("TODO: select date and time by picker")
-                    .show()
-            }
-        }
-        chipGroup.addView(chip)
+        updateChips()
 
         return binding.root
+    }
+
+    private fun updateChips() {
+        binding.root.findViewById<ChipGroup>(R.id.due_date_chips).run {
+            removeAllViews()
+
+            viewModel.taskDate?.let { dueDate ->
+                val chip = layoutInflater.inflate(
+                    R.layout.task_edit_duedate_chip,
+                    null,
+                    false
+                ) as Chip
+                addView(chip.apply {
+                    id = DateSuggestion.Custom.ordinal
+                    text = dueDate.prettyFormat
+                    isCheckable = false
+                    setOnCloseIconClickListener {
+                        viewModel.taskDate = null
+                        viewModel.taskTime = null
+                        updateChips()
+                    }
+                    setOnClickListener { showDatePicker(viewModel.taskDate ?: LocalDate.now()) }
+                })
+            } ?: Unit.let {
+                DateSuggestion.values().forEach { suggestion ->
+                    val chip = layoutInflater.inflate(
+                        R.layout.task_edit_duedate_suggestion_chip,
+                        null,
+                        false
+                    ) as Chip
+                    addView(chip.apply {
+                        id = suggestion.ordinal
+                        text = getString(suggestion.textId)
+                        isCloseIconVisible = false
+                        isCheckable = false
+                        if (suggestion == DateSuggestion.Custom) {
+                            setOnClickListener {
+                                showDatePicker(viewModel.taskDate ?: LocalDate.now())
+                            }
+                        } else {
+                            setOnClickListener {
+                                viewModel.taskDate = getSuggestedDate(suggestion)
+                                updateChips()
+                            }
+                        }
+                    })
+                }
+            }
+
+            viewModel.taskTime?.let { dueTime ->
+                val chip = layoutInflater.inflate(
+                    R.layout.task_edit_duedate_chip,
+                    null,
+                    false
+                ) as Chip
+                addView(chip.apply {
+                    id = TimeSuggestion.Custom.ordinal
+                    text = dueTime.prettyFormat
+                    isCheckable = false
+                    setOnCloseIconClickListener {
+                        viewModel.taskTime = null
+                        updateChips()
+                    }
+                    setOnClickListener { showTimePicker(viewModel.taskTime ?: LocalTime.now()) }
+                })
+            } ?: Unit.let {
+                TimeSuggestion.values().forEach { suggestion ->
+                    val chip = layoutInflater.inflate(
+                        R.layout.task_edit_duedate_suggestion_chip,
+                        null,
+                        false
+                    ) as Chip
+                    addView(chip.apply {
+                        id = suggestion.ordinal
+                        text = getString(suggestion.textId)
+                        isCloseIconVisible = false
+                        isCheckable = false
+                        if (suggestion == TimeSuggestion.Custom) {
+                            setOnClickListener {
+                                showTimePicker(viewModel.taskTime ?: LocalTime.now())
+                            }
+                        } else {
+                            setOnClickListener {
+                                viewModel.taskTime = getSuggestedTime(suggestion)
+                                updateChips()
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    }
+
+    private fun getSuggestedDate(suggestion: DateSuggestion): LocalDate {
+        return when (suggestion) {
+            DateSuggestion.Tomorrow -> LocalDate.now().plusDays(1)
+            DateSuggestion.In2Days -> LocalDate.now().plusDays(2)
+            DateSuggestion.NextMonday -> LocalDate.now().plusWeeks(1).with(DayOfWeek.MONDAY)
+            else -> throw IllegalArgumentException("invalid date")
+        }
+    }
+
+    private fun getSuggestedTime(suggestion: TimeSuggestion): LocalTime {
+        return when (suggestion) {
+            TimeSuggestion.Morning -> LocalTime.of(9, 0)
+            TimeSuggestion.Midday -> LocalTime.of(12, 0)
+            TimeSuggestion.Afternoon -> LocalTime.of(17, 0)
+            else -> throw IllegalArgumentException("invalid time")
+        }
+    }
+
+    private fun showDatePicker(dueDate: LocalDate) {
+        val millis = LocalDateTime.of(
+            dueDate,
+            LocalTime.of(0, 0)
+        ).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val picker = MaterialDatePicker.Builder
+            .datePicker()
+            .setSelection(millis)
+            .setTitleText(R.string.due_date_picker_title)
+            .build()
+        picker.addOnPositiveButtonClickListener { selection ->
+            val updatedDate =
+                Instant.ofEpochMilli(selection).atZone(ZoneId.systemDefault()).toLocalDate()
+            viewModel.taskDate = updatedDate
+            updateChips()
+        }
+        picker.addOnNegativeButtonClickListener {
+            // call back code
+        }
+        picker.addOnCancelListener {
+            // call back code
+        }
+        picker.addOnDismissListener {
+            // call back code
+        }
+        picker.show(parentFragmentManager, "date-picker")
+    }
+
+    private fun showTimePicker(dueTime: LocalTime) {
+        val clockFormat =
+            if (is24HourFormat(context)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(clockFormat)
+            .setHour(dueTime.hour)
+            .setMinute(dueTime.minute)
+            .setTitleText(R.string.due_date_picker_title)
+            .build()
+        picker.addOnPositiveButtonClickListener {
+            val updatedTime = LocalTime.of(picker.hour, picker.minute)
+            viewModel.taskTime = updatedTime
+            updateChips()
+        }
+        picker.addOnNegativeButtonClickListener {
+            // call back code
+        }
+        picker.addOnCancelListener {
+            // call back code
+        }
+        picker.addOnDismissListener {
+            // call back code
+        }
+        picker.show(parentFragmentManager, "time-picker")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         task?.let {
-            binding.removeButton.text = "Delete"
+            binding.removeButton.text = getString(R.string.task_button_delete)
             binding.removeButton.setTextColor(Color.RED)
         } ?: Unit.let {
-            binding.removeButton.text = "Cancel"
+            binding.removeButton.text = getString(R.string.task_button_cancel)
             binding.removeButton.setTextColor(Color.BLACK)
         }
-        binding.descriptionText.editText?.setText(viewModel.description)
-        binding.calendarView.updateDate(
-            viewModel.dueDate.year,
-            viewModel.dueDate.monthValue - 1,
-            viewModel.dueDate.dayOfMonth
-        )
-        binding.timePicker.hour = viewModel.dueDate.hour
-        binding.timePicker.minute = viewModel.dueDate.minute
-
+        binding.descriptionText.editText?.setText(viewModel.taskText)
         binding.descriptionText.editText?.doOnTextChanged { text, _, _, _ ->
-            viewModel.description = text.toString()
+            viewModel.taskText = text.toString()
         }
 
         binding.removeButton.setOnClickListener {
@@ -118,31 +266,14 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             dismiss()
         }
 
-        binding.calendarView.setOnDateChangedListener { _, year, monthOfYear, dayOfMonth ->
-            val date = LocalDateTime.of(
-                LocalDate.of(year, monthOfYear + 1, dayOfMonth),
-                viewModel.dueDate.toLocalTime()
-            )
-            viewModel.dueDate = date
-        }
-
-        binding.timePicker.setIs24HourView(true)
-        binding.timePicker.setOnTimeChangedListener { _, hour, minute ->
-            val date = LocalDateTime.of(
-                viewModel.dueDate.toLocalDate(),
-                LocalTime.of(hour, minute)
-            )
-            viewModel.dueDate = date
-        }
-
         binding.descriptionText.editText?.requestFocus()
 
-        val inputMethodManager: InputMethodManager? =
-            requireContext().getSystemService(InputMethodManager::class.java)
-        inputMethodManager?.showSoftInput(
-            binding.descriptionText.editText,
-            InputMethodManager.SHOW_IMPLICIT
-        )
+        requireContext().getSystemService(InputMethodManager::class.java)?.run {
+            showSoftInput(
+                binding.descriptionText.editText,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+        }
     }
 
     override fun onResume() {
@@ -152,7 +283,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
     override fun onDismiss(dialog: DialogInterface) {
         if (saveOnDismiss) {
-            if (viewModel.description.isNotBlank()) {
+            if (viewModel.taskText != null && viewModel.taskText!!.isNotBlank()) {
                 saveTask()
             } else {
                 deleteTask()
@@ -164,38 +295,52 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun saveTask() {
-        val task = if (task != null) {
-            val updatedTask = task.copy(
-                description = viewModel.description,
-                dueDate = viewModel.dueDate
-            )
-            viewModel.updateTask(updatedTask)
-            // TODO: unschedule former task
-            updatedTask
+        val dueDate = if (viewModel.taskDate != null && viewModel.taskTime != null) {
+            LocalDateTime.of(viewModel.taskDate, viewModel.taskTime)
         } else {
-            val newTask = Task(
-                description = viewModel.description,
-                createdDate = LocalDateTime.now(),
-                dueDate = viewModel.dueDate
-            )
-            viewModel.addTask(newTask)
-            newTask
+            LocalDateTime.now()
         }
-        schedule(task)
+
+        if (task != null) {
+            logger.info { "save modified task ${task.id}" }
+
+            val updatedTask = task.copy(
+                description = viewModel.taskText ?: "",
+                dueDate = dueDate
+            )
+
+            viewModel.updateTask(updatedTask)
+            unschedule(task)
+            schedule(updatedTask)
+        } else {
+            logger.info { "save new task" }
+
+            val newTask = Task(
+                description = viewModel.taskText ?: "",
+                createdDate = LocalDateTime.now(),
+                dueDate = dueDate
+            )
+
+            viewModel.addTask(newTask)
+            schedule(newTask)
+        }
     }
 
     private fun deleteTask() {
         if (task != null) {
+            logger.info { "delete task ${task.id}" }
+
             viewModel.deleteTask(task)
-            // TODO: unschedule deleted task
+            unschedule(task)
         }
     }
 
+    private fun unschedule(task: Task) {
+        // TODO: unschedule deleted task
+        logger.info { "remove reminder for ${task.id} at ${task.dueDate}" }
+    }
+
     private fun schedule(task: Task) {
-        logger.debug { "schedule $task" }
-
-        val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)
-
         val intent = Intent(requireContext(), AlarmBroadcastReceiver::class.java).apply {
             putExtra(ExtraId, task.id)
             putExtra(ExtraDescription, task.description)
@@ -203,20 +348,14 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
         val timeInMillis = task.dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        logger.debug {
-            """
-            
-            Current time     : ${LocalDateTime.now()}
-            Task due at      : ${task.dueDate}
-            Schedule alarm at: $timeInMillis
-            
-        """.prependIndent("     ")
-        }
-
+        // TODO: schedule inexact wakeup for default reminders, but exact wakeup for user specified reminders
+        val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)
         alarmManager.setExact(
             AlarmManager.RTC_WAKEUP,
             timeInMillis,
             PendingIntent.getBroadcast(context, 0, intent, 0)
         )
+
+        logger.info { "add reminder for ${task.id} at ${task.dueDate}" }
     }
 }
