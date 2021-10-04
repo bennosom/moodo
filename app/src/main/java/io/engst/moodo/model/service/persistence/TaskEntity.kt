@@ -11,7 +11,7 @@ data class TaskEntity constructor(
     val id: Long?,
     val description: String,
     val createdDate: LocalDateTime,
-    val dueDate: LocalDateTime,
+    val dueDate: LocalDateTime?,
     val doneDate: LocalDateTime?,
     val redoCount: Int,
     val shiftCount: Int

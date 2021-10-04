@@ -86,19 +86,27 @@ class TaskListFragment : Fragment() {
     }
 
     private fun updateTaskList(tasks: List<Task>) {
-        val group = DateGroup()
+        val dateGroup = DateGroup()
 
-        val doneList = mutableListOf<ListItem>()
-        val todoList = mutableListOf<ListItem>()
-        val groups = mutableSetOf<ListItem>()
+        val headerList = mutableSetOf<ListItem>()
+
+        val doneList = mutableListOf<ListItem>() // only finished tasks
+        val todoList = mutableListOf<ListItem>() // only unscheduled tasks
+        val scheduledList = mutableListOf<ListItem>() // only tasks with due date
 
         tasks.forEach { task ->
-            if (task.doneDate == null) {
-                val groupDate = group.getDateGroupForDate(task.dueDate.toLocalDate())
-                groups.add(HeaderListItem(-1, LocalDateTime.of(groupDate, LocalTime.MIN)))
-                todoList.add(TaskListItem(task.id!!, task))
-            } else {
-                doneList.add(TaskListItem(task.id!!, task))
+            when {
+                task.done -> {
+                    doneList.add(TaskListItem(task.id!!, task))
+                }
+                task.scheduled -> {
+                    val groupDate = dateGroup.getDateGroupFor(task.dueDate)
+                    headerList.add(HeaderListItem(-1, LocalDateTime.of(groupDate, LocalTime.MIN)))
+                    scheduledList.add(TaskListItem(task.id!!, task))
+                }
+                else -> {
+                    todoList.add(TaskListItem(task.id!!, task))
+                }
             }
         }
 
@@ -106,15 +114,19 @@ class TaskListFragment : Fragment() {
             (it as TaskListItem).task.doneDate
         }
 
-        todoList.addAll(groups)
         todoList.sortBy {
+            (it as TaskListItem).task.createdDate
+        }
+
+        scheduledList.addAll(headerList)
+        scheduledList.sortBy {
             when (it) {
                 is TaskListItem -> it.task.dueDate
                 is HeaderListItem -> it.date
             }
         }
 
-        val items = doneList + todoList
+        val items = doneList + todoList + scheduledList
         logger.debug { "list items changed: ${items.map { it.id }}" }
         taskListAdapter?.submitList(items)
     }

@@ -31,7 +31,7 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
 
     fun shift(task: Task, shiftBy: DateShift) {
         viewModelScope.launch {
-            val due = maxOf(task.dueDate, LocalDateTime.now().minusDays(1))
+            val due = maxOf(task.dueDate ?: LocalDateTime.now(), LocalDateTime.now().minusDays(1))
             val update = task.copy(
                 dueDate = when (shiftBy) {
                     DateShift.OneDay -> due.plusDays(1)

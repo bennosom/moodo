@@ -9,8 +9,8 @@
     <color name="primaryTextColor">#ffffff</color>
     <color name="secondaryTextColor">#ffffff</color>
 
-    <color name="task_date">#000000</color>
-    <color name="task_due_date">#000000</color>
+    <color name="task_due_date_scheduled">#000000</color>
+    <color name="task_due_date_expired">#000000</color>
     <color name="task_done">#ccc</color>
 
     <color name="app_icon_background">#FFFFFF</color>

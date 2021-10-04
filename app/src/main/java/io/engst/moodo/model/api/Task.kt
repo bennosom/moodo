@@ -9,14 +9,17 @@ data class Task(
     val id: Long? = null,
     var description: String = "",
     val createdDate: LocalDateTime = LocalDateTime.now(),
-    var dueDate: LocalDateTime = LocalDateTime.now(),
+    var dueDate: LocalDateTime? = null,
     var doneDate: LocalDateTime? = null,
     var redoCount: Int = 0,
     var shiftCount: Int = 0
 ) {
-    val isExpired: Boolean
-        get() = dueDate < LocalDateTime.now()
-
-    val isDone: Boolean
+    val done: Boolean
         get() = doneDate != null
+
+    val scheduled: Boolean
+        get() = dueDate != null
+
+    val expired: Boolean
+        get() = dueDate?.let { it <= LocalDateTime.now() } ?: false
 }

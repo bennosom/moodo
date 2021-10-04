@@ -19,7 +19,10 @@ import java.time.format.DateTimeFormatter
 
 const val TAG = "TaskDatabase"
 
-@Database(entities = [TaskEntity::class], version = 1)
+@Database(
+    version = 2,
+    entities = [TaskEntity::class]
+)
 @TypeConverters(TaskConverter::class)
 abstract class TaskDatabase : RoomDatabase() {
     abstract val taskDao: TaskDao

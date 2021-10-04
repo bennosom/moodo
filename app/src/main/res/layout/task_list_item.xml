@@ -3,9 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
-    android:clickable="true"
-    android:focusable="true">
-<!-- elevation je nach duedate -->
+    android:clickable="true">
+    <!-- elevation je nach duedate -->
 
     <LinearLayout
         android:layout_width="match_parent"

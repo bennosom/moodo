@@ -30,6 +30,7 @@ import io.engst.moodo.model.api.TimeSuggestion
 import io.engst.moodo.model.api.textId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.shared.prettyFormat
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.DayOfWeek
 import java.time.Instant
@@ -37,18 +38,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-
-val LocalDateTime.prettyFormat: String
-    get() = format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
-
-val LocalDate.prettyFormat: String
-    get() = format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-
-val LocalTime.prettyFormat: String
-    get() = format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
-
 
 class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
@@ -66,8 +55,8 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
         if (task != null) {
             viewModel.taskText = task.description
-            viewModel.taskDate = task.dueDate.toLocalDate()
-            viewModel.taskTime = task.dueDate.toLocalTime()
+            viewModel.taskDate = task.dueDate?.toLocalDate()
+            viewModel.taskTime = task.dueDate?.toLocalTime()
         }
     }
 
@@ -298,7 +287,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         val dueDate = if (viewModel.taskDate != null && viewModel.taskTime != null) {
             LocalDateTime.of(viewModel.taskDate, viewModel.taskTime)
         } else {
-            LocalDateTime.now()
+            null
         }
 
         if (task != null) {
@@ -310,8 +299,11 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             )
 
             viewModel.updateTask(updatedTask)
+
             unschedule(task)
-            schedule(updatedTask)
+            updatedTask.dueDate?.let {
+                schedule(updatedTask, it)
+            }
         } else {
             logger.info { "save new task" }
 
@@ -322,7 +314,10 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             )
 
             viewModel.addTask(newTask)
-            schedule(newTask)
+
+            newTask.dueDate?.let {
+                schedule(newTask, it)
+            }
         }
     }
 
@@ -340,13 +335,13 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         logger.info { "remove reminder for ${task.id} at ${task.dueDate}" }
     }
 
-    private fun schedule(task: Task) {
+    private fun schedule(task: Task, dueDate: LocalDateTime) {
         val intent = Intent(requireContext(), AlarmBroadcastReceiver::class.java).apply {
             putExtra(ExtraId, task.id)
             putExtra(ExtraDescription, task.description)
         }
 
-        val timeInMillis = task.dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val timeInMillis = dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         // TODO: schedule inexact wakeup for default reminders, but exact wakeup for user specified reminders
         val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)

@@ -9,10 +9,8 @@ import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
 import io.engst.moodo.model.api.Task
-import io.engst.moodo.shared.Logger
-import io.engst.moodo.shared.injectLogger
-import io.engst.moodo.ui.tasks.task.convertDateRelativeFormatted
-import io.engst.moodo.ui.tasks.task.convertDateTimeFormatted
+import io.engst.moodo.shared.prettyFormat
+import io.engst.moodo.shared.prettyFormatRelative
 import java.time.LocalDateTime
 
 sealed class ListItem {
@@ -49,12 +47,10 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
             task = item.task
             with(binding) {
                 descriptionText.text = item.task.description
-                dueDate.text = item.task.doneDate?.let { doneDate ->
-                    convertDateTimeFormatted(doneDate)
-                } ?: convertDateTimeFormatted(item.task.dueDate)
+                dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
                 val textColor = root.resources.getColor(
-                    if (item.task.isExpired) R.color.task_due_date
-                    else R.color.task_date,
+                    if (item.task.expired) R.color.task_due_date_expired
+                    else R.color.task_due_date_scheduled,
                     root.context.theme
                 )
                 dueDate.setTextColor(textColor)
@@ -69,7 +65,7 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
         private val binding: TaskListItemHeaderBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: HeaderListItem) {
-            binding.headerText.text = convertDateRelativeFormatted(item.date)
+            binding.headerText.text = binding.root.context.getString(item.date.prettyFormatRelative)
         }
     }
 
@@ -106,8 +102,6 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
     }
 
     object ItemDiffer : DiffUtil.ItemCallback<ListItem>() {
-        private val logger: Logger by injectLogger()
-
         override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
             return when {
                 oldItem is HeaderListItem && newItem is HeaderListItem -> oldItem.date == newItem.date

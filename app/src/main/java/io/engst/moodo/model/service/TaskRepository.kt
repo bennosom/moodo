@@ -16,12 +16,6 @@ class TaskRepository(private val taskDao: TaskDao) {
         it.asDomainModel()
     }
 
-    suspend fun getNextTaskId(): Long {
-        return withContext(Dispatchers.IO) {
-            taskDao.addTask(TaskEntity.from(Task()))
-        }
-    }
-
     suspend fun addTask(task: Task) {
         return withContext(Dispatchers.IO) {
             taskDao.addTask(TaskEntity.from(task))
