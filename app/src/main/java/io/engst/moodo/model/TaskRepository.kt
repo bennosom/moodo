@@ -1,16 +1,19 @@
-package io.engst.moodo.model.service
+package io.engst.moodo.model
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
-import io.engst.moodo.model.api.Task
-import io.engst.moodo.model.service.persistence.TaskDao
-import io.engst.moodo.model.service.persistence.TaskEntity
-import io.engst.moodo.model.service.persistence.asDomainModel
+import io.engst.moodo.model.persistence.TaskDao
+import io.engst.moodo.model.persistence.TaskEntity
+import io.engst.moodo.model.persistence.asDomainModel
+import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 class TaskRepository(private val taskDao: TaskDao) {
+
+    private val logger: Logger by injectLogger("model")
 
     val tasks: LiveData<List<Task>> = Transformations.map(taskDao.getTasks()) {
         it.asDomainModel()
@@ -18,19 +21,25 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     suspend fun addTask(task: Task) {
         return withContext(Dispatchers.IO) {
-            taskDao.addTask(TaskEntity.from(task))
+            val entity = TaskEntity.from(task)
+            taskDao.addTask(entity)
+            logger.debug { "addTask $entity" }
         }
     }
 
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
-            taskDao.updateTask(TaskEntity.from(task))
+            val entity = TaskEntity.from(task)
+            taskDao.updateTask(entity)
+            logger.debug { "updateTask $entity" }
         }
     }
 
     suspend fun deleteTask(task: Task) {
         withContext(Dispatchers.IO) {
-            taskDao.deleteTask(TaskEntity.from(task))
+            val entity = TaskEntity.from(task)
+            taskDao.deleteTask(entity)
+            logger.debug { "deleteTask $entity" }
         }
     }
 

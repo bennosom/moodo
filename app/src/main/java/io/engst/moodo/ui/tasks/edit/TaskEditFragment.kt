@@ -1,4 +1,4 @@
-package io.engst.moodo.ui.tasks.task
+package io.engst.moodo.ui.tasks.edit
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -21,13 +21,13 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
-import io.engst.moodo.headless.AlarmBroadcastReceiver
-import io.engst.moodo.model.api.DateSuggestion
-import io.engst.moodo.model.api.ExtraDescription
-import io.engst.moodo.model.api.ExtraId
-import io.engst.moodo.model.api.Task
-import io.engst.moodo.model.api.TimeSuggestion
-import io.engst.moodo.model.api.textId
+import io.engst.moodo.headless.TaskReminderReceiver
+import io.engst.moodo.model.DateSuggestion
+import io.engst.moodo.model.ExtraDescription
+import io.engst.moodo.model.ExtraId
+import io.engst.moodo.model.Task
+import io.engst.moodo.model.TimeSuggestion
+import io.engst.moodo.model.textId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.shared.prettyFormat
@@ -43,7 +43,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
     private val logger: Logger by injectLogger("view")
 
-    private val viewModel: TaskViewModel by viewModel()
+    private val viewModel: TaskEditViewModel by viewModel()
 
     private lateinit var binding: FragmentTaskEditBinding
 
@@ -336,7 +336,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun schedule(task: Task, dueDate: LocalDateTime) {
-        val intent = Intent(requireContext(), AlarmBroadcastReceiver::class.java).apply {
+        val intent = Intent(requireContext(), TaskReminderReceiver::class.java).apply {
             putExtra(ExtraId, task.id)
             putExtra(ExtraDescription, task.description)
         }

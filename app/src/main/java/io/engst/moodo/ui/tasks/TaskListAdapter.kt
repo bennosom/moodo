@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
-import io.engst.moodo.model.api.Task
+import io.engst.moodo.model.Task
 import io.engst.moodo.shared.prettyFormat
 import io.engst.moodo.shared.prettyFormatRelative
 import java.time.LocalDateTime
@@ -49,7 +49,7 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
                 descriptionText.text = item.task.description
                 dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
                 val textColor = root.resources.getColor(
-                    if (item.task.expired) R.color.task_due_date_expired
+                    if (item.task.due) R.color.task_due_date_expired
                     else R.color.task_due_date_scheduled,
                     root.context.theme
                 )

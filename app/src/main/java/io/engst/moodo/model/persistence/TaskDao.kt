@@ -1,4 +1,4 @@
-package io.engst.moodo.model.service.persistence
+package io.engst.moodo.model.persistence
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao

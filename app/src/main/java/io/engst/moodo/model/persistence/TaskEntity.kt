@@ -1,8 +1,8 @@
-package io.engst.moodo.model.service.persistence
+package io.engst.moodo.model.persistence
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import io.engst.moodo.model.api.Task
+import io.engst.moodo.model.Task
 import java.time.LocalDateTime
 
 @Entity(tableName = "task")

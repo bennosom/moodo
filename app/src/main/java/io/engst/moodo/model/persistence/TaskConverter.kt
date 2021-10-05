@@ -1,4 +1,4 @@
-package io.engst.moodo.model.service.persistence
+package io.engst.moodo.model.persistence
 
 import androidx.room.TypeConverter
 import java.time.LocalDateTime

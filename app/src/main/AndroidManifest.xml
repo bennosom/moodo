@@ -26,14 +26,14 @@
         </activity>
 
         <receiver
-            android:name=".headless.AlarmBroadcastReceiver"
+            android:name=".headless.TaskReminderReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".headless.AlarmService" />
+        <service android:name=".headless.TaskReminderService" />
     </application>
 
 </manifest>

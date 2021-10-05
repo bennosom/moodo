@@ -3,7 +3,7 @@ package io.engst.moodo.ui
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.engst.moodo.R
-import io.engst.moodo.model.service.persistence.TaskDatabase
+import io.engst.moodo.model.persistence.TaskDatabase
 
 class MainActivity : AppCompatActivity() {
 

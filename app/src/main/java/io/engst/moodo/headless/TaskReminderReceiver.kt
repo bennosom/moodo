@@ -9,14 +9,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import io.engst.moodo.MoodoApplication
 import io.engst.moodo.R
-import io.engst.moodo.model.api.ExtraDescription
-import io.engst.moodo.model.api.ExtraId
+import io.engst.moodo.model.ExtraDescription
+import io.engst.moodo.model.ExtraId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.MainActivity
 
 
-class AlarmBroadcastReceiver : BroadcastReceiver() {
+class TaskReminderReceiver : BroadcastReceiver() {
     private val logger: Logger by injectLogger()
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -46,7 +46,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun startAlarmService(context: Context, intent: Intent) {
-        val serviceIntent = Intent(context, AlarmService::class.java).apply {
+        val serviceIntent = Intent(context, TaskReminderService::class.java).apply {
             intent.extras?.let { putExtras(it) }
         }
         context.startForegroundService(serviceIntent)

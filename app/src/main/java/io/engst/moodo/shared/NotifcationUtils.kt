@@ -15,7 +15,7 @@ import io.engst.moodo.MoodoApplication
 import io.engst.moodo.R
 import java.util.Calendar
 
-object NotificationScheduler {
+object NotificationUtils {
 
     private const val DAILY_REMINDER_REQUEST_CODE = 100
     const val TAG = "NotificationScheduler"

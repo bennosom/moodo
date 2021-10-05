@@ -1,4 +1,4 @@
-package io.engst.moodo.model.service.persistence
+package io.engst.moodo.model.persistence
 
 import android.app.Activity
 import android.content.Context

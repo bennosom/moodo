@@ -2,9 +2,9 @@ package io.engst.moodo.ui.tasks
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import io.engst.moodo.model.api.DateShift
-import io.engst.moodo.model.api.Task
-import io.engst.moodo.model.service.TaskRepository
+import io.engst.moodo.model.DateShift
+import io.engst.moodo.model.Task
+import io.engst.moodo.model.TaskRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

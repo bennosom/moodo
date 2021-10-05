@@ -15,7 +15,7 @@
     </fragment>
     <fragment
         android:id="@+id/taskEditFragment"
-        android:name="io.engst.moodo.ui.tasks.task.TaskEditFragment"
+        android:name="io.engst.moodo.ui.tasks.edit.TaskEditFragment"
         android:label="TaskEditFragment"
         tools:layout="@layout/fragment_task_edit" />
 </navigation>

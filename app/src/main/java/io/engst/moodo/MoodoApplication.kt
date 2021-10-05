@@ -2,11 +2,11 @@ package io.engst.moodo
 
 import android.app.Application
 import android.content.Context
-import io.engst.moodo.model.service.TaskRepository
-import io.engst.moodo.model.service.persistence.TaskDatabase
-import io.engst.moodo.shared.NotificationScheduler
+import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.model.persistence.TaskDatabase
+import io.engst.moodo.shared.NotificationUtils
 import io.engst.moodo.ui.tasks.TaskListViewModel
-import io.engst.moodo.ui.tasks.task.TaskViewModel
+import io.engst.moodo.ui.tasks.edit.TaskEditViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -30,7 +30,7 @@ class MoodoApplication : Application() {
                             single { TaskRepository(get()) }
 
                             viewModel { TaskListViewModel(get()) }
-                            viewModel { TaskViewModel(get()) }
+                            viewModel { TaskEditViewModel(get()) }
                         }
                     )
                 }
@@ -41,7 +41,7 @@ class MoodoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        NotificationScheduler.createNotificationChannel(applicationContext)
+        NotificationUtils.createNotificationChannel(applicationContext)
 
         setupKoin(this)
     }

@@ -1,4 +1,4 @@
-package io.engst.moodo.model.api
+package io.engst.moodo.model
 
 import java.time.LocalDateTime
 
@@ -20,6 +20,6 @@ data class Task(
     val scheduled: Boolean
         get() = dueDate != null
 
-    val expired: Boolean
-        get() = dueDate?.let { it <= LocalDateTime.now() } ?: false
+    val due: Boolean
+        get() = dueDate?.let { it <= LocalDateTime.now() } ?: true
 }

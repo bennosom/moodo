@@ -13,13 +13,13 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import io.engst.moodo.MoodoApplication.Companion.CHANNEL_ID
 import io.engst.moodo.R
-import io.engst.moodo.model.api.ExtraDescription
-import io.engst.moodo.model.api.ExtraId
+import io.engst.moodo.model.ExtraDescription
+import io.engst.moodo.model.ExtraId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.MainActivity
 
-class AlarmService : Service() {
+class TaskReminderService : Service() {
     private val logger: Logger by injectLogger()
 
     private lateinit var vibrator: Vibrator
