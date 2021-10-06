@@ -77,12 +77,12 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             removeAllViews()
 
             viewModel.taskDate?.let { dueDate ->
-                val chip = layoutInflater.inflate(
+                val dateChip = layoutInflater.inflate(
                     R.layout.task_edit_duedate_chip,
                     null,
                     false
                 ) as Chip
-                addView(chip.apply {
+                addView(dateChip.apply {
                     id = DateSuggestion.Custom.ordinal
                     text = dueDate.prettyFormat
                     isCheckable = false
@@ -93,14 +93,59 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                     }
                     setOnClickListener { showDatePicker(viewModel.taskDate ?: LocalDate.now()) }
                 })
+
+                // add time suggestions only if date was set
+                viewModel.taskTime?.let { dueTime ->
+                    val timeChip = layoutInflater.inflate(
+                        R.layout.task_edit_duedate_chip,
+                        null,
+                        false
+                    ) as Chip
+                    addView(timeChip.apply {
+                        id = TimeSuggestion.Custom.ordinal
+                        text = dueTime.prettyFormat
+                        isCheckable = false
+                        setOnCloseIconClickListener {
+                            viewModel.taskTime = null
+                            updateChips()
+                        }
+                        setOnClickListener { showTimePicker(viewModel.taskTime ?: LocalTime.now()) }
+                    })
+                } ?: Unit.let {
+                    TimeSuggestion.values().forEach { suggestion ->
+                        val timeChip = layoutInflater.inflate(
+                            R.layout.task_edit_duedate_suggestion_chip,
+                            null,
+                            false
+                        ) as Chip
+                        addView(timeChip.apply {
+                            id = suggestion.ordinal
+                            text = getString(suggestion.textId)
+                            isCloseIconVisible = false
+                            isSelected = suggestion == TimeSuggestion.Morning
+                            isCheckable = false
+                            if (suggestion == TimeSuggestion.Custom) {
+                                setOnClickListener {
+                                    showTimePicker(viewModel.taskTime ?: LocalTime.now())
+                                    updateChips()
+                                }
+                            } else {
+                                setOnClickListener {
+                                    viewModel.taskTime = getSuggestedTime(suggestion)
+                                    updateChips()
+                                }
+                            }
+                        })
+                    }
+                }
             } ?: Unit.let {
                 DateSuggestion.values().forEach { suggestion ->
-                    val chip = layoutInflater.inflate(
+                    val dateChip = layoutInflater.inflate(
                         R.layout.task_edit_duedate_suggestion_chip,
                         null,
                         false
                     ) as Chip
-                    addView(chip.apply {
+                    addView(dateChip.apply {
                         id = suggestion.ordinal
                         text = getString(suggestion.textId)
                         isCloseIconVisible = false
@@ -112,48 +157,6 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                         } else {
                             setOnClickListener {
                                 viewModel.taskDate = getSuggestedDate(suggestion)
-                                updateChips()
-                            }
-                        }
-                    })
-                }
-            }
-
-            viewModel.taskTime?.let { dueTime ->
-                val chip = layoutInflater.inflate(
-                    R.layout.task_edit_duedate_chip,
-                    null,
-                    false
-                ) as Chip
-                addView(chip.apply {
-                    id = TimeSuggestion.Custom.ordinal
-                    text = dueTime.prettyFormat
-                    isCheckable = false
-                    setOnCloseIconClickListener {
-                        viewModel.taskTime = null
-                        updateChips()
-                    }
-                    setOnClickListener { showTimePicker(viewModel.taskTime ?: LocalTime.now()) }
-                })
-            } ?: Unit.let {
-                TimeSuggestion.values().forEach { suggestion ->
-                    val chip = layoutInflater.inflate(
-                        R.layout.task_edit_duedate_suggestion_chip,
-                        null,
-                        false
-                    ) as Chip
-                    addView(chip.apply {
-                        id = suggestion.ordinal
-                        text = getString(suggestion.textId)
-                        isCloseIconVisible = false
-                        isCheckable = false
-                        if (suggestion == TimeSuggestion.Custom) {
-                            setOnClickListener {
-                                showTimePicker(viewModel.taskTime ?: LocalTime.now())
-                            }
-                        } else {
-                            setOnClickListener {
-                                viewModel.taskTime = getSuggestedTime(suggestion)
                                 updateChips()
                             }
                         }
@@ -284,8 +287,9 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun saveTask() {
-        val dueDate = if (viewModel.taskDate != null && viewModel.taskTime != null) {
-            LocalDateTime.of(viewModel.taskDate, viewModel.taskTime)
+        val dueDate = if (viewModel.taskDate != null) {
+            val dueTime = viewModel.taskTime ?: LocalTime.of(9, 0)
+            LocalDateTime.of(viewModel.taskDate, dueTime)
         } else {
             null
         }
