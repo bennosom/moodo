@@ -10,12 +10,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.engst.moodo.ui.MainActivity
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 
 const val TAG = "TaskDatabase"
 
@@ -30,6 +31,22 @@ abstract class TaskDatabase : RoomDatabase() {
     companion object {
         private var database: TaskDatabase? = null
 
+        private val dbMigration1to2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // create temporary table
+                db.execSQL("CREATE TABLE IF NOT EXISTS `task-v2` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `description` TEXT NOT NULL, `createdDate` TEXT NOT NULL, `dueDate` TEXT, `doneDate` TEXT, `redoCount` INTEGER NOT NULL, `shiftCount` INTEGER NOT NULL)")
+
+                // copy data
+                db.execSQL("INSERT INTO `task-v2` (`id`,`description`,`createdDate`,`dueDate`,`doneDate`,`redoCount`,`shiftCount`) SELECT id, description, createdDate, dueDate, doneDate, redoCount, shiftCount FROM `task`")
+
+                // remove old table
+                db.execSQL("DROP TABLE `task`")
+
+                // change table name to the old one
+                db.execSQL("ALTER TABLE `task-v2` RENAME TO `task`")
+            }
+        }
+
         fun getInstance(context: Context): TaskDatabase {
             if (database == null) {
                 synchronized(TaskDatabase::class.java) {
@@ -37,7 +54,7 @@ abstract class TaskDatabase : RoomDatabase() {
                         context.applicationContext,
                         TaskDatabase::class.java,
                         "moodoDb"
-                    ).build()
+                    ).addMigrations(dbMigration1to2).build()
                 }
             }
             return database!!
@@ -101,7 +118,6 @@ abstract class TaskDatabase : RoomDatabase() {
             val dbName = database!!.openHelper.databaseName
             val databaseFile = context.getDatabasePath(dbName)
             database!!.close()
-
 
             if (file.extension == "sqlite3") {
                 file.copyTo(databaseFile, overwrite = true)
