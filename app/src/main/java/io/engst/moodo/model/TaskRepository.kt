@@ -1,13 +1,13 @@
 package io.engst.moodo.model
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskEntity
 import io.engst.moodo.model.persistence.asDomainModel
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
@@ -15,9 +15,7 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     private val logger: Logger by injectLogger("model")
 
-    val tasks: LiveData<List<Task>> = Transformations.map(taskDao.getTasks()) {
-        it.asDomainModel()
-    }
+    val tasks: Flow<List<Task>> = taskDao.getTasks().map { it.asDomainModel() }
 
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
