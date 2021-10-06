@@ -72,6 +72,126 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        task?.let {
+            binding.removeButton.text = getString(R.string.task_button_delete)
+            binding.removeButton.setTextColor(Color.RED)
+        } ?: Unit.let {
+            binding.removeButton.text = getString(R.string.task_button_cancel)
+            binding.removeButton.setTextColor(Color.BLACK)
+        }
+        binding.descriptionText.editText?.setText(viewModel.taskText)
+        binding.descriptionText.editText?.doOnTextChanged { text, _, _, _ ->
+            viewModel.taskText = text.toString()
+        }
+
+        binding.removeButton.setOnClickListener {
+            saveOnDismiss = false
+            dismiss()
+        }
+
+        binding.descriptionText.editText?.requestFocus()
+
+        requireContext().getSystemService(InputMethodManager::class.java)?.run {
+            showSoftInput(
+                binding.descriptionText.editText,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+        }
+    }
+
+    override fun onResume() {
+        saveOnDismiss = true
+        super.onResume()
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        if (saveOnDismiss) {
+            if (viewModel.taskText != null && viewModel.taskText!!.isNotBlank()) {
+                saveTask()
+            } else {
+                deleteTask()
+            }
+        } else {
+            deleteTask()
+        }
+        super.onDismiss(dialog)
+    }
+
+    private fun saveTask() {
+        val dueDate = if (viewModel.taskDate != null) {
+            val dueTime = viewModel.taskTime ?: LocalTime.of(9, 0)
+            LocalDateTime.of(viewModel.taskDate, dueTime)
+        } else {
+            null
+        }
+
+        if (task != null) {
+            logger.info { "save modified task ${task.id}" }
+
+            val updatedTask = task.copy(
+                description = viewModel.taskText ?: "",
+                dueDate = dueDate
+            )
+
+            viewModel.updateTask(updatedTask)
+
+            unschedule(task)
+            updatedTask.dueDate?.let {
+                schedule(updatedTask, it)
+            }
+        } else {
+            logger.info { "save new task" }
+
+            val newTask = Task(
+                description = viewModel.taskText ?: "",
+                createdDate = LocalDateTime.now(),
+                dueDate = dueDate
+            )
+
+            viewModel.addTask(newTask)
+
+            newTask.dueDate?.let {
+                schedule(newTask, it)
+            }
+        }
+    }
+
+    private fun deleteTask() {
+        if (task != null) {
+            logger.info { "delete task ${task.id}" }
+
+            viewModel.deleteTask(task)
+            unschedule(task)
+        }
+    }
+
+    private fun unschedule(task: Task) {
+        // TODO: unschedule deleted task
+        logger.info { "remove reminder for ${task.id} at ${task.dueDate}" }
+    }
+
+    private fun schedule(task: Task, dueDate: LocalDateTime) {
+        val intent = Intent(requireContext(), TaskReminderReceiver::class.java).apply {
+            putExtra(ExtraId, task.id)
+            putExtra(ExtraDescription, task.description)
+        }
+
+        val timeInMillis = dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        // TODO: schedule inexact wakeup for default reminders, but exact wakeup for user specified reminders
+        val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)
+        alarmManager.setExact(
+            AlarmManager.RTC_WAKEUP,
+            timeInMillis,
+            PendingIntent.getBroadcast(context, 0, intent, 0)
+        )
+
+        logger.info { "add reminder for ${task.id} at ${task.dueDate}" }
+    }
+
     private fun updateChips() {
         binding.root.findViewById<ChipGroup>(R.id.due_date_chips).run {
             removeAllViews()
@@ -107,6 +227,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                         isCheckable = false
                         setOnCloseIconClickListener {
                             viewModel.taskTime = null
+                            viewModel.taskDate = null
                             updateChips()
                         }
                         setOnClickListener { showTimePicker(viewModel.taskTime ?: LocalTime.now()) }
@@ -236,125 +357,5 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             // call back code
         }
         picker.show(parentFragmentManager, "time-picker")
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        task?.let {
-            binding.removeButton.text = getString(R.string.task_button_delete)
-            binding.removeButton.setTextColor(Color.RED)
-        } ?: Unit.let {
-            binding.removeButton.text = getString(R.string.task_button_cancel)
-            binding.removeButton.setTextColor(Color.BLACK)
-        }
-        binding.descriptionText.editText?.setText(viewModel.taskText)
-        binding.descriptionText.editText?.doOnTextChanged { text, _, _, _ ->
-            viewModel.taskText = text.toString()
-        }
-
-        binding.removeButton.setOnClickListener {
-            saveOnDismiss = false
-            dismiss()
-        }
-
-        binding.descriptionText.editText?.requestFocus()
-
-        requireContext().getSystemService(InputMethodManager::class.java)?.run {
-            showSoftInput(
-                binding.descriptionText.editText,
-                InputMethodManager.SHOW_IMPLICIT
-            )
-        }
-    }
-
-    override fun onResume() {
-        saveOnDismiss = true
-        super.onResume()
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        if (saveOnDismiss) {
-            if (viewModel.taskText != null && viewModel.taskText!!.isNotBlank()) {
-                saveTask()
-            } else {
-                deleteTask()
-            }
-        } else {
-            deleteTask()
-        }
-        super.onDismiss(dialog)
-    }
-
-    private fun saveTask() {
-        val dueDate = if (viewModel.taskDate != null) {
-            val dueTime = viewModel.taskTime ?: LocalTime.of(9, 0)
-            LocalDateTime.of(viewModel.taskDate, dueTime)
-        } else {
-            null
-        }
-
-        if (task != null) {
-            logger.info { "save modified task ${task.id}" }
-
-            val updatedTask = task.copy(
-                description = viewModel.taskText ?: "",
-                dueDate = dueDate
-            )
-
-            viewModel.updateTask(updatedTask)
-
-            unschedule(task)
-            updatedTask.dueDate?.let {
-                schedule(updatedTask, it)
-            }
-        } else {
-            logger.info { "save new task" }
-
-            val newTask = Task(
-                description = viewModel.taskText ?: "",
-                createdDate = LocalDateTime.now(),
-                dueDate = dueDate
-            )
-
-            viewModel.addTask(newTask)
-
-            newTask.dueDate?.let {
-                schedule(newTask, it)
-            }
-        }
-    }
-
-    private fun deleteTask() {
-        if (task != null) {
-            logger.info { "delete task ${task.id}" }
-
-            viewModel.deleteTask(task)
-            unschedule(task)
-        }
-    }
-
-    private fun unschedule(task: Task) {
-        // TODO: unschedule deleted task
-        logger.info { "remove reminder for ${task.id} at ${task.dueDate}" }
-    }
-
-    private fun schedule(task: Task, dueDate: LocalDateTime) {
-        val intent = Intent(requireContext(), TaskReminderReceiver::class.java).apply {
-            putExtra(ExtraId, task.id)
-            putExtra(ExtraDescription, task.description)
-        }
-
-        val timeInMillis = dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-        // TODO: schedule inexact wakeup for default reminders, but exact wakeup for user specified reminders
-        val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)
-        alarmManager.setExact(
-            AlarmManager.RTC_WAKEUP,
-            timeInMillis,
-            PendingIntent.getBroadcast(context, 0, intent, 0)
-        )
-
-        logger.info { "add reminder for ${task.id} at ${task.dueDate}" }
     }
 }

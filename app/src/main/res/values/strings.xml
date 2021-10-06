@@ -12,6 +12,7 @@
     <string name="notification_action_task_done">Done</string>
     <string name="notification_action_task_shift">Shift</string>
 
+    <string name="shift_by_nothing">Today</string>
     <string name="shift_by_one_day">1 day</string>
     <string name="shift_by_two_days">2 days</string>
     <string name="shift_by_one_week">1 week</string>

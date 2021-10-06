@@ -22,14 +22,21 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
 
     fun shift(task: Task, shiftBy: DateShift) {
         viewModelScope.launch(Dispatchers.Default) {
-            val due = maxOf(task.dueDate ?: LocalDateTime.now(), LocalDateTime.now().minusDays(1))
+            val baseDate = when {
+                task.scheduled && !task.done && !task.due -> task.dueDate!!
+                else -> LocalDateTime.now()
+            }
+
+            val shiftedDueDate = when (shiftBy) {
+                DateShift.None -> baseDate
+                DateShift.OneDay -> baseDate.plusDays(1)
+                DateShift.TwoDays -> baseDate.plusDays(2)
+                DateShift.OneWeek -> baseDate.plusWeeks(1)
+                DateShift.OneMonth -> baseDate.plusMonths(1)
+            }
+
             val update = task.copy(
-                dueDate = when (shiftBy) {
-                    DateShift.OneDay -> due.plusDays(1)
-                    DateShift.TwoDays -> due.plusDays(2)
-                    DateShift.OneWeek -> due.plusWeeks(1)
-                    DateShift.OneMonth -> due.plusMonths(1)
-                },
+                dueDate = shiftedDueDate,
                 doneDate = null,
                 shiftCount = task.shiftCount + 1,
                 redoCount = if (task.doneDate != null) task.redoCount + 1 else 0

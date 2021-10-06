@@ -133,7 +133,7 @@ abstract class SwipeTaskCallback(val context: Context) :
             in swipeThreshold + offset * 0.01f..swipeThreshold + offset * 0.02f -> DateShift.TwoDays
             in swipeThreshold + offset * 0.02f..swipeThreshold + offset * 0.03f -> DateShift.OneWeek
             in swipeThreshold + offset * 0.03f..swipeThreshold + offset * 0.04f -> DateShift.OneMonth
-            else -> DateShift.OneDay
+            else -> DateShift.None
         }
     }
 
