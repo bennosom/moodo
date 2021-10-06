@@ -2,35 +2,20 @@ package io.engst.moodo.ui.tasks
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import io.engst.moodo.model.DateShift
 import io.engst.moodo.model.Task
 import io.engst.moodo.model.TaskRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
-    private val viewModelJob = SupervisorJob()
-    private val viewModelScope = CoroutineScope(viewModelJob + Dispatchers.Main)
-
     val tasks: LiveData<List<Task>> = taskRepository.tasks
 
-    init {
-        viewModelScope.launch {
-            //repository.insertDummyData()
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        viewModelJob.cancel()
-    }
-
     fun shift(task: Task, shiftBy: DateShift) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             val due = maxOf(task.dueDate ?: LocalDateTime.now(), LocalDateTime.now().minusDays(1))
             val update = task.copy(
                 dueDate = when (shiftBy) {
@@ -48,14 +33,14 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
     }
 
     fun resolve(task: Task) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             val update = task.copy(doneDate = LocalDateTime.now())
             taskRepository.updateTask(update)
         }
     }
 
     fun delete(task: Task) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             taskRepository.deleteTask(task)
         }
     }

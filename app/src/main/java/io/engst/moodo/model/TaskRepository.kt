@@ -20,7 +20,7 @@ class TaskRepository(private val taskDao: TaskDao) {
     }
 
     suspend fun addTask(task: Task) {
-        return withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             val entity = TaskEntity.from(task)
             taskDao.addTask(entity)
             logger.debug { "addTask $entity" }

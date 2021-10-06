@@ -1,12 +1,12 @@
 package io.engst.moodo.ui.tasks.edit
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import io.engst.moodo.model.Task
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -34,19 +34,19 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
 
     fun addTask(task: Task) {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.Default) {
             taskRepository.addTask(task)
         }
     }
 
     fun updateTask(task: Task) {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.Default) {
             taskRepository.updateTask(task)
         }
     }
 
     fun deleteTask(task: Task) {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.Default) {
             taskRepository.deleteTask(task)
         }
     }
