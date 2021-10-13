@@ -11,7 +11,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
-import io.engst.moodo.model.DateShift
+import io.engst.moodo.model.types.DateShift
 
 const val swipeThreshold = 0.3f
 

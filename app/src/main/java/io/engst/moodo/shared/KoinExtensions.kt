@@ -9,5 +9,5 @@ inline fun <reified T : Any> koinGet(noinline parameters: ParametersDefinition? 
 inline fun <reified T : Any> inject(noinline parameters: ParametersDefinition? = null) =
     lazy(LazyThreadSafetyMode.NONE) { koinGet<T>(parameters) }
 
-inline fun <reified T> T.injectLogger(tag: String? = null): Lazy<Logger> =
-    lazy(LazyThreadSafetyMode.NONE) { Logger.create<T>(tag) }
+inline fun <reified T : Any> T.injectLogger(tag: String? = null): Lazy<Logger> =
+    lazy(LazyThreadSafetyMode.NONE) { LogCatLogger.create<T>(tag) }

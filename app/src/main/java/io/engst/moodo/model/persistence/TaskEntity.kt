@@ -2,7 +2,7 @@ package io.engst.moodo.model.persistence
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import io.engst.moodo.model.Task
+import io.engst.moodo.model.types.Task
 import java.time.LocalDateTime
 
 @Entity(tableName = "task")

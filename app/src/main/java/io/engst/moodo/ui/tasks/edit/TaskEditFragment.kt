@@ -1,9 +1,6 @@
 package io.engst.moodo.ui.tasks.edit
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.DialogInterface
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
@@ -21,13 +18,10 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
-import io.engst.moodo.headless.TaskReminderReceiver
-import io.engst.moodo.model.DateSuggestion
-import io.engst.moodo.model.ExtraDescription
-import io.engst.moodo.model.ExtraId
-import io.engst.moodo.model.Task
-import io.engst.moodo.model.TimeSuggestion
-import io.engst.moodo.model.textId
+import io.engst.moodo.model.types.DateSuggestion
+import io.engst.moodo.model.types.Task
+import io.engst.moodo.model.types.TimeSuggestion
+import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.shared.prettyFormat
@@ -129,7 +123,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         }
 
         if (task != null) {
-            logger.info { "save modified task ${task.id}" }
+            logger.info { "save modified task #${task.id}" }
 
             val updatedTask = task.copy(
                 description = viewModel.taskText ?: "",
@@ -137,11 +131,6 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             )
 
             viewModel.updateTask(updatedTask)
-
-            unschedule(task)
-            updatedTask.dueDate?.let {
-                schedule(updatedTask, it)
-            }
         } else {
             logger.info { "save new task" }
 
@@ -152,44 +141,15 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             )
 
             viewModel.addTask(newTask)
-
-            newTask.dueDate?.let {
-                schedule(newTask, it)
-            }
         }
     }
 
     private fun deleteTask() {
         if (task != null) {
-            logger.info { "delete task ${task.id}" }
+            logger.info { "delete task #${task.id}" }
 
             viewModel.deleteTask(task)
-            unschedule(task)
         }
-    }
-
-    private fun unschedule(task: Task) {
-        // TODO: unschedule deleted task
-        logger.info { "remove reminder for ${task.id} at ${task.dueDate}" }
-    }
-
-    private fun schedule(task: Task, dueDate: LocalDateTime) {
-        val intent = Intent(requireContext(), TaskReminderReceiver::class.java).apply {
-            putExtra(ExtraId, task.id)
-            putExtra(ExtraDescription, task.description)
-        }
-
-        val timeInMillis = dueDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-        // TODO: schedule inexact wakeup for default reminders, but exact wakeup for user specified reminders
-        val alarmManager: AlarmManager = requireContext().getSystemService(AlarmManager::class.java)
-        alarmManager.setExact(
-            AlarmManager.RTC_WAKEUP,
-            timeInMillis,
-            PendingIntent.getBroadcast(context, 0, intent, 0)
-        )
-
-        logger.info { "add reminder for ${task.id} at ${task.dueDate}" }
     }
 
     private fun updateChips() {

@@ -2,22 +2,16 @@ package io.engst.moodo
 
 import android.app.Application
 import android.content.Context
-import io.engst.moodo.model.TaskRepository
-import io.engst.moodo.model.persistence.TaskDatabase
-import io.engst.moodo.shared.NotificationUtils
-import io.engst.moodo.ui.tasks.TaskListViewModel
-import io.engst.moodo.ui.tasks.edit.TaskEditViewModel
+import io.engst.moodo.model.moduleModel
+import io.engst.moodo.shared.moduleShared
+import io.engst.moodo.ui.moduleUi
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
-import org.koin.dsl.module
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MoodoApplication : Application() {
 
     companion object {
-        const val CHANNEL_ID = "ALARM_SERVICE_CHANNEL"
-
         private var initialized = AtomicBoolean(false)
 
         private fun setupKoin(context: Context) {
@@ -25,13 +19,9 @@ class MoodoApplication : Application() {
                 startKoin {
                     androidContext(context)
                     modules(
-                        module {
-                            single { TaskDatabase.getInstance(context).taskDao }
-                            single { TaskRepository(get()) }
-
-                            viewModel { TaskListViewModel(get()) }
-                            viewModel { TaskEditViewModel(get()) }
-                        }
+                        moduleShared,
+                        moduleModel,
+                        moduleUi
                     )
                 }
             }
@@ -40,8 +30,6 @@ class MoodoApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        NotificationUtils.createNotificationChannel(applicationContext)
 
         setupKoin(this)
     }

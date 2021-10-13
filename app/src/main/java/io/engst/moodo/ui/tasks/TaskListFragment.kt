@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import io.engst.moodo.databinding.FragmentTaskListBinding
-import io.engst.moodo.model.DateShift
-import io.engst.moodo.model.Task
+import io.engst.moodo.model.types.DateShift
+import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
@@ -84,15 +84,16 @@ class TaskListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         lifecycle.coroutineScope.launch {
-            viewModel.tasks.collect {
-                logger.debug { "items changed: ${it.map { it.id }}" }
-                taskListAdapter?.submitList(it)
+            viewModel.tasks.collect { list ->
+                taskListAdapter?.submitList(list) {
+                    logger.debug { "list items changed: ${list.map { it.id }}" }
+                }
             }
         }
     }
 
     private fun showTaskEditPopup(task: Task? = null) {
         val sheet = TaskEditFragment(task)
-        sheet.show(requireActivity().supportFragmentManager, "foo")
+        sheet.show(requireActivity().supportFragmentManager, "taskEdit")
     }
 }

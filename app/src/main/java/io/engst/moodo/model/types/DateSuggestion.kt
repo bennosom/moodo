@@ -1,4 +1,4 @@
-package io.engst.moodo.model
+package io.engst.moodo.model.types
 
 import io.engst.moodo.R
 

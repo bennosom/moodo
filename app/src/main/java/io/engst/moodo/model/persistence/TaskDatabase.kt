@@ -18,7 +18,7 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-const val TAG = "TaskDatabase"
+const val LOG_TAG = "TaskDatabase"
 
 @Database(
     version = 2,
@@ -62,7 +62,7 @@ abstract class TaskDatabase : RoomDatabase() {
 
         fun backup(context: Context) {
             if (database == null) {
-                Log.e(TAG, "database not initialized")
+                Log.e(LOG_TAG, "database not initialized")
                 return
             }
 
@@ -71,7 +71,7 @@ abstract class TaskDatabase : RoomDatabase() {
             //val backupPath = context.getExternalFilesDir("backup")
             val databaseFile = context.getDatabasePath(dbName)
 
-            Log.d(TAG, "Backup database $dbName at $databaseFile")
+            Log.d(LOG_TAG, "Backup database $dbName at $databaseFile")
 
             database!!.close()
 
@@ -81,7 +81,7 @@ abstract class TaskDatabase : RoomDatabase() {
 
             databaseFile.copyTo(File("$backupPath/$fileName"))
 
-            Log.d(TAG, "Saved $fileName to $backupPath")
+            Log.d(LOG_TAG, "Saved $fileName to $backupPath")
             Toast.makeText(context, "Backup successfully", Toast.LENGTH_LONG)
                 .show()
             restartApp(context)
@@ -92,7 +92,7 @@ abstract class TaskDatabase : RoomDatabase() {
             val backupFiles = backupPath.listFiles()
 
             if (backupFiles.isNullOrEmpty()) {
-                Log.w(TAG, "No backups available at $backupPath")
+                Log.w(LOG_TAG, "No backups available at $backupPath")
                 Toast.makeText(context, "No backups found", Toast.LENGTH_LONG).show()
                 return
             }
@@ -107,13 +107,13 @@ abstract class TaskDatabase : RoomDatabase() {
                     restore(context, file)
                 }
                 .setOnCancelListener {
-                    Log.d(TAG, "Restore dialog canceled")
+                    Log.d(LOG_TAG, "Restore dialog canceled")
                 }
                 .show()
         }
 
         private fun restore(context: Context, file: File) {
-            Log.d(TAG, "Restore database from $file")
+            Log.d(LOG_TAG, "Restore database from $file")
 
             val dbName = database!!.openHelper.databaseName
             val databaseFile = context.getDatabasePath(dbName)
@@ -121,10 +121,10 @@ abstract class TaskDatabase : RoomDatabase() {
 
             if (file.extension == "sqlite3") {
                 file.copyTo(databaseFile, overwrite = true)
-                Log.d(TAG, "Restored database from $file")
+                Log.d(LOG_TAG, "Restored database from $file")
                 restartApp(context)
             } else {
-                Log.e(TAG, "File is no SQLite database: $file")
+                Log.e(LOG_TAG, "File is no SQLite database: $file")
             }
         }
 

@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
-import io.engst.moodo.model.Task
+import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.prettyFormat
 import io.engst.moodo.shared.prettyFormatRelative
 import java.time.LocalDateTime

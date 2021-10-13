@@ -2,9 +2,9 @@ package io.engst.moodo.ui.tasks
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.engst.moodo.model.DateShift
-import io.engst.moodo.model.Task
 import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.model.types.DateShift
+import io.engst.moodo.model.types.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -96,6 +96,10 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
 
         return sortedDoneList + todayHeader + sortedDueList + sortedScheduledList
+    }
+
+    fun scrollToToday() {
+        // TODO
     }
 }
 

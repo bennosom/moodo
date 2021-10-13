@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-    <activity
+        <activity
             android:name=".ui.MainActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -26,6 +26,10 @@
         </activity>
 
         <receiver
+            android:name=".headless.TaskActionReceiver"
+            android:enabled="true" />
+
+        <receiver
             android:name=".headless.TaskReminderReceiver"
             android:enabled="true">
             <intent-filter>
@@ -33,7 +37,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".headless.TaskReminderService" />
+        <!-- <service android:name=".headless.TaskReminderService" /> -->
     </application>
 
 </manifest>

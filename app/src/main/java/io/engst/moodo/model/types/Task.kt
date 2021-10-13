@@ -1,9 +1,7 @@
-package io.engst.moodo.model
+package io.engst.moodo.model.types
 
+import java.io.Serializable
 import java.time.LocalDateTime
-
-const val ExtraDescription = "description"
-const val ExtraId = "taskId"
 
 data class Task(
     val id: Long? = null,
@@ -13,7 +11,7 @@ data class Task(
     var doneDate: LocalDateTime? = null,
     var redoCount: Int = 0,
     var shiftCount: Int = 0
-) {
+) : Serializable {
     val done: Boolean
         get() = doneDate != null
 

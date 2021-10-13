@@ -3,44 +3,70 @@ package io.engst.moodo.model
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskEntity
 import io.engst.moodo.model.persistence.asDomainModel
+import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
-class TaskRepository(private val taskDao: TaskDao) {
-
+class TaskRepository(
+    private val taskDao: TaskDao,
+    private val scheduler: TaskScheduler
+) {
     private val logger: Logger by injectLogger("model")
 
-    val tasks: Flow<List<Task>> = taskDao.getTasks().map { it.asDomainModel() }
+    val tasks: Flow<List<Task>> =
+        taskDao.getTasks().map { it.asDomainModel() }.flowOn(Dispatchers.IO)
 
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
-            val entity = TaskEntity.from(task)
-            taskDao.addTask(entity)
-            logger.debug { "addTask $entity" }
+            logger.debug { "add $task" }
+            val effectiveId = taskDao.addTask(TaskEntity.from(task))
+            scheduler.schedule(task.copy(id = effectiveId))
         }
     }
 
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
-            val entity = TaskEntity.from(task)
-            taskDao.updateTask(entity)
-            logger.debug { "updateTask $entity" }
+            logger.debug { "update $task" }
+            taskDao.updateTask(TaskEntity.from(task))
+            scheduler.schedule(task)
         }
     }
 
     suspend fun deleteTask(task: Task) {
         withContext(Dispatchers.IO) {
-            val entity = TaskEntity.from(task)
-            taskDao.deleteTask(entity)
-            logger.debug { "deleteTask $entity" }
+            logger.debug { "delete $task" }
+            taskDao.deleteTask(TaskEntity.from(task))
+            scheduler.removeSchedule(task)
         }
     }
 
+    fun setDone(taskId: Long) {
+        GlobalScope.launch(Dispatchers.IO) {
+            logger.debug { "setDone $taskId" }
+            val task = taskDao.getTaskById(taskId)
+            taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
+        }
+    }
+
+    fun shift(taskId: Long) {
+        GlobalScope.launch(Dispatchers.IO) {
+            logger.debug { "shift $taskId" }
+            val task = taskDao.getTaskById(taskId)
+            taskDao.updateTask(task.copy(dueDate = task.dueDate!!.plusDays(1)))
+        }
+    }
+
+    /**
+     * TODO: Replace with Database Pre-Initialization step of Database-Builder
+     */
     suspend fun insertDummyData() {
         withContext(Dispatchers.IO) {
             val now = LocalDateTime.now()

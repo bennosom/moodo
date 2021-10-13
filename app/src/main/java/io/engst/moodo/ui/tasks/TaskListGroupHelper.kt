@@ -8,11 +8,11 @@ class TaskListGroupHelper(val today: LocalDate) {
 
     // specific dates
     private val yesterday: LocalDate = today.minusDays(1)
-    val tomorrow: LocalDate = today.plusDays(1)
-    val dayAfterTomorrow: LocalDate = tomorrow.plusDays(1)
-    val soon: LocalDate = dayAfterTomorrow.plusDays(1)
+    private val tomorrow: LocalDate = today.plusDays(1)
+    private val dayAfterTomorrow: LocalDate = tomorrow.plusDays(1)
+    private val soon: LocalDate = dayAfterTomorrow.plusDays(1)
     private val soonEnd: LocalDate = soon.plusDays(14)
-    val later: LocalDate = soonEnd.plusDays(1)
+    private val later: LocalDate = soonEnd.plusDays(1)
 
     // date ranges
     val rangePassed: ClosedRange<LocalDateTime> =

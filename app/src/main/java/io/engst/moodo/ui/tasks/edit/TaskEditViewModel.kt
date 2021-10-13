@@ -1,8 +1,8 @@
 package io.engst.moodo.ui.tasks.edit
 
 import androidx.lifecycle.ViewModel
-import io.engst.moodo.model.Task
 import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.Dispatchers
