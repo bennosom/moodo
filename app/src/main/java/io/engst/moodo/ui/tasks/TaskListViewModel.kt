@@ -45,10 +45,16 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
     }
 
-    fun resolve(task: Task) {
+    fun setDone(task: Task) {
         viewModelScope.launch(Dispatchers.Default) {
             val update = task.copy(doneDate = LocalDateTime.now())
             taskRepository.updateTask(update)
+        }
+    }
+
+    fun undoDelete(task: Task) {
+        viewModelScope.launch(Dispatchers.Default) {
+            taskRepository.addTask(task)
         }
     }
 
@@ -102,4 +108,3 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
         // TODO
     }
 }
-

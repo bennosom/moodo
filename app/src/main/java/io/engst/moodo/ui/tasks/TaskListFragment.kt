@@ -9,6 +9,7 @@ import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskListBinding
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
@@ -53,7 +54,7 @@ class TaskListFragment : Fragment() {
                 val taskViewHolder =
                     binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.TaskViewHolder
                 val task = taskViewHolder.task
-                viewModel.resolve(task!!)
+                viewModel.setDone(task!!)
             }
 
             override fun onShift(position: Int, shiftBy: DateShift) {
@@ -68,9 +69,16 @@ class TaskListFragment : Fragment() {
                 val taskViewHolder =
                     binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.TaskViewHolder
                 val task = taskViewHolder.task
-                Snackbar
-                    .make(binding.root, "Task deleted", Snackbar.LENGTH_SHORT)
-                    .setAction("Action", null).show()
+
+                activity?.findViewById<View>(R.id.activity_root_layout)?.let { view ->
+                    Snackbar
+                        .make(view, "Task deleted", Snackbar.LENGTH_LONG)
+                        .setAction("Undo") {
+                            viewModel.undoDelete(task!!)
+                        }
+                        .show()
+                }
+
                 viewModel.delete(task!!)
             }
         }

@@ -29,14 +29,15 @@ data class TaskEntity constructor(
     }
 }
 
-fun List<TaskEntity>.asDomainModel(): List<Task> = map {
+fun List<TaskEntity>.toTaskList(): List<Task> = map { it.toTask() }
+
+fun TaskEntity.toTask(): Task =
     Task(
-        id = it.id!!,
-        description = it.description,
-        createdDate = it.createdDate,
-        dueDate = it.dueDate,
-        doneDate = it.doneDate,
-        redoCount = it.redoCount,
-        shiftCount = it.shiftCount
+        id = id!!,
+        description = description,
+        createdDate = createdDate,
+        dueDate = dueDate,
+        doneDate = doneDate,
+        redoCount = redoCount,
+        shiftCount = shiftCount
     )
-}

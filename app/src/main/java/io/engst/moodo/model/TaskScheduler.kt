@@ -58,7 +58,9 @@ class TaskScheduler(
             putExtra(ExtraKeyTaskDescription, description)
         }
 
-        val requestCode = (dueDateMillis % Int.MAX_VALUE).toInt()
+        logger.debug { "buildIntent: intent=$intent" }
+
+        val requestCode = (task.id!! % Int.MAX_VALUE).toInt()
         return PendingIntent.getBroadcast(
             context,
             requestCode,

@@ -3,8 +3,8 @@ package io.engst.moodo.headless
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.engst.moodo.BuildConfig
 import io.engst.moodo.model.NotificationHelper
+import io.engst.moodo.moodoIntentExtraPrefix
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.inject
 import io.engst.moodo.shared.injectLogger
@@ -17,10 +17,9 @@ val Intent.extraAsString: String?
 class TaskReminderReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ExtraKeyTaskId = BuildConfig.APPLICATION_ID + ".intent.extra.TaskId"
-        const val ExtraKeyTaskDueDate = BuildConfig.APPLICATION_ID + ".intent.extra.TaskDueDate"
-        const val ExtraKeyTaskDescription =
-            BuildConfig.APPLICATION_ID + ".intent.extra.TaskDescription"
+        const val ExtraKeyTaskId = "$moodoIntentExtraPrefix.TaskId"
+        const val ExtraKeyTaskDueDate = "$moodoIntentExtraPrefix.TaskDueDate"
+        const val ExtraKeyTaskDescription = "$moodoIntentExtraPrefix.TaskDescription"
     }
 
     private val logger: Logger by injectLogger("headless")

@@ -1,15 +1,23 @@
 package io.engst.moodo.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.coroutineScope
 import io.engst.moodo.R
+import io.engst.moodo.headless.TaskReminderReceiver.Companion.ExtraKeyTaskId
+import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.persistence.TaskDatabase
+import io.engst.moodo.shared.inject
 import io.engst.moodo.ui.tasks.TaskListViewModel
+import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
+
 
 class MainActivity : AppCompatActivity() {
 
+    private val repository: TaskRepository by inject()
     private val viewModel: TaskListViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +43,16 @@ class MainActivity : AppCompatActivity() {
                         true
                     }
                     else -> false
+                }
+            }
+        }
+
+        if (intent.action == Intent.ACTION_VIEW) {
+            intent.extras?.getLong(ExtraKeyTaskId)?.let { taskId ->
+                lifecycle.coroutineScope.launchWhenCreated {
+                    val task = repository.getTask(taskId)
+                    val sheet = TaskEditFragment(task)
+                    sheet.show(supportFragmentManager, "taskEdit")
                 }
             }
         }

@@ -2,7 +2,8 @@ package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskEntity
-import io.engst.moodo.model.persistence.asDomainModel
+import io.engst.moodo.model.persistence.toTask
+import io.engst.moodo.model.persistence.toTaskList
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
@@ -22,7 +24,13 @@ class TaskRepository(
     private val logger: Logger by injectLogger("model")
 
     val tasks: Flow<List<Task>> =
-        taskDao.getTasks().map { it.asDomainModel() }.flowOn(Dispatchers.IO)
+        taskDao.getTasks().map { it.toTaskList() }.flowOn(Dispatchers.IO)
+
+    fun getTask(id: Long): Task {
+        return runBlocking(Dispatchers.IO) {
+            return@runBlocking taskDao.getTaskById(id).toTask()
+        }
+    }
 
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
@@ -50,17 +58,9 @@ class TaskRepository(
 
     fun setDone(taskId: Long) {
         GlobalScope.launch(Dispatchers.IO) {
-            logger.debug { "setDone $taskId" }
+            logger.debug { "setDone #$taskId" }
             val task = taskDao.getTaskById(taskId)
             taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
-        }
-    }
-
-    fun shift(taskId: Long) {
-        GlobalScope.launch(Dispatchers.IO) {
-            logger.debug { "shift $taskId" }
-            val task = taskDao.getTaskById(taskId)
-            taskDao.updateTask(task.copy(dueDate = task.dueDate!!.plusDays(1)))
         }
     }
 

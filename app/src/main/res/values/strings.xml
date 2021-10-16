@@ -9,9 +9,6 @@
     <string name="action_info">About</string>
     <string name="action_description_about">About Moodo</string>
 
-    <string name="notification_action_task_done">Done</string>
-    <string name="notification_action_task_shift">Shift</string>
-
     <string name="shift_by_nothing">Today</string>
     <string name="shift_by_one_day">1 day</string>
     <string name="shift_by_two_days">2 days</string>
@@ -37,4 +34,10 @@
     <string name="due_time_suggestion_midday">Midday</string>
     <string name="due_time_suggestion_afternoon">Afternoon</string>
     <string name="due_time_custom">Other</string>
+
+    <string name="notification_channel_name">Task reminder</string>
+    <string name="notification_group_name">Task reminder group</string>
+    <string name="notification_channel_description">Notification channel to notify about due tasks</string>
+    <string name="notification_action_task_done">Done</string>
+    <string name="notification_action_task_shift">Shift</string>
 </resources>

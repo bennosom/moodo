@@ -3,8 +3,8 @@ package io.engst.moodo.headless
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.engst.moodo.BuildConfig
 import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.moodoIntentActionPrefix
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.inject
 import io.engst.moodo.shared.injectLogger
@@ -12,8 +12,7 @@ import io.engst.moodo.shared.injectLogger
 class TaskActionReceiver : BroadcastReceiver() {
 
     enum class Type(val action: String) {
-        Done("${BuildConfig.APPLICATION_ID}.intent.action.done"),
-        Shift("${BuildConfig.APPLICATION_ID}.intent.action.shift")
+        Done("$moodoIntentActionPrefix.done")
     }
 
     private val logger: Logger by injectLogger("headless")
@@ -25,11 +24,11 @@ class TaskActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             Type.Done.action -> {
                 val taskId = intent.getLongExtra(TaskReminderReceiver.ExtraKeyTaskId, -1L)
-                repository.setDone(taskId)
-            }
-            Type.Shift.action -> {
-                val taskId = intent.getLongExtra(TaskReminderReceiver.ExtraKeyTaskId, -1L)
-                repository.shift(taskId)
+                if (taskId != -1L) {
+                    repository.setDone(taskId)
+                } else {
+                    logger.error { "Invalid task id" }
+                }
             }
         }
     }

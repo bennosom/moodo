@@ -6,8 +6,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.TextPaint
+import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.getSystemService
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
@@ -51,6 +56,7 @@ abstract class SwipeTaskCallback(val context: Context) :
         viewHolder2: RecyclerView.ViewHolder
     ) = false
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         val holder = viewHolder as TaskListAdapter.TaskViewHolder
         if (direction == ItemTouchHelper.LEFT) {
@@ -62,6 +68,9 @@ abstract class SwipeTaskCallback(val context: Context) :
         } else {
             onShift(viewHolder.adapterPosition, dateShiftAmount)
         }
+
+        context.getSystemService<Vibrator>()
+            ?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
     }
 
     override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float = swipeThreshold

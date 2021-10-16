@@ -147,7 +147,6 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     private fun deleteTask() {
         if (task != null) {
             logger.info { "delete task #${task.id}" }
-
             viewModel.deleteTask(task)
         }
     }
