@@ -13,25 +13,32 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.engst.moodo.R
 import io.engst.moodo.headless.TaskActionReceiver
-import io.engst.moodo.headless.TaskReminderReceiver.Companion.ExtraKeyTaskId
-import io.engst.moodo.moodo
+import io.engst.moodo.model.types.TaskAction
+import io.engst.moodo.model.types.app
+import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.ui.MainActivity
-
 
 class NotificationHelper(val logger: Logger, val context: Context) {
 
     companion object {
-        private const val ReminderChannelId = "$moodo.notification.channel.reminders"
-        private const val ReminderGroupId = "$moodo.notification.group.reminders"
+        private const val ReminderChannelId = "$app.notification.channel.reminders"
+        private const val ReminderGroupId = "$app.notification.group.reminders"
     }
 
     init {
         createNotificationChannel()
     }
 
+    fun removeNotification(taskId: Long) {
+        logger.debug { "removeNotification #$taskId" }
+
+        val notificationId = (taskId % Int.MAX_VALUE).toInt() + 100
+        NotificationManagerCompat.from(context).cancel(notificationId)
+    }
+
     fun showNotification(taskId: Long, dueDateMillis: Long, description: String) {
-        logger.debug { "showNotification for task #$taskId" }
+        logger.debug { "showNotification #$taskId" }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -44,8 +51,8 @@ class NotificationHelper(val logger: Logger, val context: Context) {
         val notificationSummaryId = 0
 
         val doneIntent = Intent(context, TaskActionReceiver::class.java).apply {
-            action = TaskActionReceiver.Type.Done.action
-            putExtra(ExtraKeyTaskId, taskId)
+            action = TaskAction.Done.action
+            putExtra(extraTaskId, taskId)
         }
         val donePendingIntent = PendingIntent.getBroadcast(
             context,
@@ -53,11 +60,10 @@ class NotificationHelper(val logger: Logger, val context: Context) {
             doneIntent,
             0
         )
-        logger.debug { "showNotification: doneIntent=$doneIntent" }
 
         val shiftIntent = Intent(context, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
-            putExtra(ExtraKeyTaskId, taskId)
+            putExtra(extraTaskId, taskId)
         }
         val shiftPendingIntent = PendingIntent.getActivity(
             context,
@@ -65,44 +71,47 @@ class NotificationHelper(val logger: Logger, val context: Context) {
             shiftIntent,
             0
         )
-        logger.debug { "showNotification: shiftIntent=$shiftIntent" }
 
         val actionDone: NotificationCompat.Action = NotificationCompat.Action.Builder(
-            R.drawable.ic_done_white_24dp,
+            R.drawable.ic_done_24,
             context.getString(R.string.notification_action_task_done),
             donePendingIntent
         ).build()
 
         val actionShift: NotificationCompat.Action = NotificationCompat.Action.Builder(
-            R.drawable.ic_navigate_next_white_24dp,
+            R.drawable.ic_more_time_24,
             context.getString(R.string.notification_action_task_shift),
             shiftPendingIntent
         ).build()
 
         val notificationTask: Notification = NotificationCompat.Builder(context, ReminderChannelId)
-            .setSmallIcon(R.drawable.ic_baseline_schedule_24)
-            .setContentTitle(description)
+            .setSmallIcon(R.drawable.ic_done_all_24)
+            //.setContentTitle(description)
+            .setContentText(description)
             .setContentIntent(pendingIntent)
             .addAction(actionDone)
             .addAction(actionShift)
             .setWhen(dueDateMillis)
             .setShowWhen(true)
             .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setGroup(ReminderGroupId)
             .build()
 
         val notificationSummary = NotificationCompat.Builder(context, ReminderChannelId)
-            .setSmallIcon(R.drawable.ic_done_all_black_24dp)
+            .setSmallIcon(R.drawable.ic_done_all_24)
+            .setContentIntent(pendingIntent)
+            .setContentTitle("x tasks due")
+            //set content text to support devices running API level < 24
+            .setContentText("x tasks due")
             .setStyle(
                 NotificationCompat.InboxStyle()
-                    .addLine("a b")
-                    .addLine("c d")
-                    .setBigContentTitle("2 new messages")
-                    .setSummaryText("bla blubber")
+                    .addLine("not implemented 1")
+                    .addLine("not implemented 2")
+                    .setBigContentTitle("x tasks due")
+                    .setSummaryText("x tasks due")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setGroup(ReminderGroupId)
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
             .setGroupSummary(true)
@@ -112,10 +121,11 @@ class NotificationHelper(val logger: Logger, val context: Context) {
             notify(notificationId, notificationTask)
             notify(notificationSummaryId, notificationSummary)
         }
-        logger.debug { "showNotification: id=$notificationId notification=$notificationTask" }
     }
 
     private fun createNotificationChannel() {
+        logger.debug { "createNotificationChannel" }
+
         context.getSystemService<NotificationManager>()?.let { notificationManager ->
             // channel
             val channel = NotificationChannel(

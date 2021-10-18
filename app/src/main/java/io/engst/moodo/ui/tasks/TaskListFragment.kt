@@ -15,15 +15,16 @@ import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.ui.tasks.TaskListViewModel.Companion.todayHeaderId
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class TaskListFragment : Fragment() {
     private val logger: Logger by injectLogger("view")
 
-    private val viewModel: TaskListViewModel by viewModel()
+    private val viewModel: TaskListViewModel by sharedViewModel()
 
     private var taskListAdapter: TaskListAdapter? = null
 
@@ -52,38 +53,50 @@ class TaskListFragment : Fragment() {
         val swipeHandler = object : SwipeTaskCallback(requireContext()) {
             override fun onDone(position: Int) {
                 val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.TaskViewHolder
-                val task = taskViewHolder.task
-                viewModel.setDone(task!!)
+                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
+                val task = (taskViewHolder.item as TaskListItem).task
+                viewModel.setDone(task)
             }
 
             override fun onShift(position: Int, shiftBy: DateShift) {
                 val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.TaskViewHolder
-                val task = taskViewHolder.task
-                viewModel.shift(task!!, shiftBy)
-                binding.taskList.adapter!!.notifyDataSetChanged()
+                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
+                val task = (taskViewHolder.item as TaskListItem).task
+                if (task.done) {
+                    viewModel.setUndone(task)
+                } else {
+                    viewModel.shift(task, shiftBy)
+                }
             }
 
             override fun onDelete(position: Int) {
                 val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.TaskViewHolder
-                val task = taskViewHolder.task
+                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
+                val task = (taskViewHolder.item as TaskListItem).task
 
                 activity?.findViewById<View>(R.id.activity_root_layout)?.let { view ->
                     Snackbar
                         .make(view, "Task deleted", Snackbar.LENGTH_LONG)
                         .setAction("Undo") {
-                            viewModel.undoDelete(task!!)
+                            viewModel.undoDelete(task)
                         }
                         .show()
                 }
 
-                viewModel.delete(task!!)
+                viewModel.delete(task)
             }
         }
 
         ItemTouchHelper(swipeHandler).attachToRecyclerView(binding.taskList)
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            viewModel.scrollToToday.collect { _ ->
+                taskListAdapter!!.currentList.map { it.id }.indexOf(todayHeaderId)
+                    .takeIf { it != -1 }?.let { todayPosition ->
+                        binding.taskList.smoothScrollToPosition(todayPosition)
+                    }
+            }
+        }
 
         return binding.root
     }

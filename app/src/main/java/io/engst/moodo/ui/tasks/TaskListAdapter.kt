@@ -1,6 +1,7 @@
 package io.engst.moodo.ui.tasks
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -14,22 +15,22 @@ import io.engst.moodo.shared.prettyFormatRelative
 import java.time.LocalDateTime
 
 sealed class ListItem {
-    abstract val id: Long
+    abstract val id: String
 }
 
 data class HeaderListItem(
-    override val id: Long,
+    override val id: String,
     val date: LocalDateTime
 ) : ListItem()
 
 data class TaskListItem(
-    override val id: Long,
+    override val id: String,
     val task: Task
 ) : ListItem()
 
-typealias OnTaskClick = (task: Task) -> Unit
+typealias OnTaskListItemClicked = (task: Task) -> Unit
 
-class TaskListAdapter(private val onClick: OnTaskClick) :
+class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
     ListAdapter<ListItem, RecyclerView.ViewHolder>(ItemDiffer) {
 
     enum class ViewType {
@@ -37,35 +38,41 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
         Task
     }
 
-    class TaskViewHolder(
-        private val binding: TaskListItemBinding,
-        private val onClick: OnTaskClick
-    ) : RecyclerView.ViewHolder(binding.root) {
-        var task: Task? = null
+    sealed class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        var item: ListItem? = null
 
-        fun bind(item: TaskListItem) {
-            task = item.task
-            with(binding) {
-                descriptionText.text = item.task.description
-                dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
-                val textColor = root.resources.getColor(
-                    if (item.task.due) R.color.task_due_date_expired
-                    else R.color.task_due_date_scheduled,
-                    root.context.theme
-                )
-                dueDate.setTextColor(textColor)
-                root.setOnClickListener {
-                    onClick(item.task)
+        class TaskViewHolder(
+            private val binding: TaskListItemBinding,
+            private val onClick: OnTaskListItemClicked
+        ) : ViewHolder(binding.root) {
+            fun bind(item: TaskListItem) {
+                this.item = item
+
+                with(binding) {
+                    descriptionText.text = item.task.description
+                    dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
+                    val textColor = root.resources.getColor(
+                        if (item.task.due) R.color.task_due_date_expired
+                        else R.color.task_due_date_scheduled,
+                        root.context.theme
+                    )
+                    dueDate.setTextColor(textColor)
+                    root.setOnClickListener {
+                        onClick(item.task)
+                    }
                 }
             }
         }
-    }
 
-    class HeaderViewHolder(
-        private val binding: TaskListItemHeaderBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(item: HeaderListItem) {
-            binding.headerText.text = binding.root.context.getString(item.date.prettyFormatRelative)
+        class HeaderViewHolder(
+            private val binding: TaskListItemHeaderBinding
+        ) : ViewHolder(binding.root) {
+            fun bind(item: HeaderListItem) {
+                this.item = item
+
+                binding.headerText.text =
+                    binding.root.context.getString(item.date.prettyFormatRelative)
+            }
         }
     }
 
@@ -79,11 +86,11 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             ViewType.Header.ordinal ->
-                HeaderViewHolder(
+                ViewHolder.HeaderViewHolder(
                     TaskListItemHeaderBinding.inflate(inflater, parent, false)
                 )
             ViewType.Task.ordinal ->
-                TaskViewHolder(
+                ViewHolder.TaskViewHolder(
                     TaskListItemBinding.inflate(inflater, parent, false),
                     onClick
                 )
@@ -92,10 +99,10 @@ class TaskListAdapter(private val onClick: OnTaskClick) :
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = when (holder) {
-        is HeaderViewHolder -> {
+        is ViewHolder.HeaderViewHolder -> {
             holder.bind(getItem(position) as HeaderListItem)
         }
-        is TaskViewHolder -> {
+        is ViewHolder.TaskViewHolder -> {
             holder.bind(getItem(position) as TaskListItem)
         }
         else -> throw IllegalArgumentException("unknown view holder type")

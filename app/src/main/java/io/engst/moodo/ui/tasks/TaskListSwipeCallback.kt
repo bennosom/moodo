@@ -27,8 +27,8 @@ abstract class SwipeTaskCallback(val context: Context) :
 
     private val shiftByArea = SwipeArea(
         arrayOf(
-            AppCompatResources.getDrawable(context, R.drawable.ic_navigate_next_white_24dp),
-            AppCompatResources.getDrawable(context, R.drawable.ic_refresh_black_24dp)
+            AppCompatResources.getDrawable(context, R.drawable.ic_more_time_24),
+            AppCompatResources.getDrawable(context, R.drawable.ic_refresh_24)
         ),
         arrayOf(Color.parseColor("#ffffff"), Color.parseColor("#ffffff")),
         arrayOf(Color.parseColor("#6052d1"), Color.parseColor("#ebc934")),
@@ -37,8 +37,8 @@ abstract class SwipeTaskCallback(val context: Context) :
 
     private val resolveArea = SwipeArea(
         arrayOf(
-            AppCompatResources.getDrawable(context, R.drawable.ic_done_white_24dp),
-            AppCompatResources.getDrawable(context, R.drawable.ic_clear_white_24dp)
+            AppCompatResources.getDrawable(context, R.drawable.ic_done_24),
+            AppCompatResources.getDrawable(context, R.drawable.ic_outline_delete_24)
         ),
         arrayOf(Color.parseColor("#ffffff"), Color.parseColor("#ffffff")),
         arrayOf(Color.parseColor("#52d165"), Color.parseColor("#d15252")),
@@ -58,9 +58,9 @@ abstract class SwipeTaskCallback(val context: Context) :
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        val holder = viewHolder as TaskListAdapter.TaskViewHolder
+        val holder = viewHolder as TaskListAdapter.ViewHolder.TaskViewHolder
         if (direction == ItemTouchHelper.LEFT) {
-            if (holder.task!!.done) {
+            if ((holder.item as TaskListItem).task.done) {
                 onDelete(viewHolder.adapterPosition)
             } else {
                 onDone(viewHolder.adapterPosition)
@@ -84,8 +84,8 @@ abstract class SwipeTaskCallback(val context: Context) :
         actionState: Int,
         isCurrentlyActive: Boolean
     ) {
-        val taskViewHolder = viewHolder as TaskListAdapter.TaskViewHolder
-        val task = taskViewHolder.task!!
+        val taskViewHolder = viewHolder as TaskListAdapter.ViewHolder.TaskViewHolder
+        val task = (taskViewHolder.item as TaskListItem).task
         val itemView = taskViewHolder.itemView
         val dRatio = dX / itemView.width
         val tx = dX.toInt()
@@ -174,16 +174,18 @@ abstract class SwipeTaskCallback(val context: Context) :
             image[mode]?.draw(canvas)
 
             // text
-            val textPaint = TextPaint(paint)
-            textPaint.color = color[mode]
-            textPaint.textSize = 45f
+            if (mode == 0) {
+                val textPaint = TextPaint(paint)
+                textPaint.color = color[mode]
+                textPaint.textSize = 45f
 
-            val textBounds = Rect()
-            textPaint.getTextBounds(text, 0, text.length, textBounds)
-            val textMarginTop = (rect.height() + textBounds.height()) / 2
-            val textX = rect.left + 24
-            val textY = rect.top + textMarginTop
-            canvas.drawText(text, textX.toFloat(), textY.toFloat(), textPaint)
+                val textBounds = Rect()
+                textPaint.getTextBounds(text, 0, text.length, textBounds)
+                val textMarginTop = (rect.height() + textBounds.height()) / 2
+                val textX = rect.left + 24
+                val textY = rect.top + textMarginTop
+                canvas.drawText(text, textX.toFloat(), textY.toFloat(), textPaint)
+            }
         }
     }
 }

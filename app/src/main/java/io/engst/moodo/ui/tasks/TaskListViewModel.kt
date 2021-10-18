@@ -7,6 +7,7 @@ import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -15,6 +16,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel() {
+
+    companion object {
+        const val todayHeaderId = "Today"
+    }
+
+    val scrollToToday: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val tasks: Flow<List<ListItem>> = taskRepository.tasks
         .map { sortTasksWithHeader(it) }
@@ -52,6 +59,16 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
     }
 
+    fun setUndone(task: Task) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val update = task.copy(
+                dueDate = null,
+                doneDate = null
+            )
+            taskRepository.updateTask(update)
+        }
+    }
+
     fun undoDelete(task: Task) {
         viewModelScope.launch(Dispatchers.Default) {
             taskRepository.addTask(task)
@@ -66,17 +83,19 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
 
     private fun sortTasksWithHeader(tasks: List<Task>): List<ListItem> {
         val dateGroupHelper = TaskListGroupHelper(LocalDate.now())
+        val todayDate = LocalDateTime.of(dateGroupHelper.today, LocalTime.MIN)
 
         val doneList = mutableListOf<TaskListItem>()
         val todayHeader = HeaderListItem(
-            -1, LocalDateTime.of(dateGroupHelper.today, LocalTime.MIN)
+            id = todayHeaderId,
+            date = todayDate
         )
         val dueList = mutableListOf<TaskListItem>()
         val scheduledHeaderList = mutableSetOf<HeaderListItem>()
         val scheduledList = mutableListOf<TaskListItem>()
 
         tasks.forEach { task ->
-            val item = TaskListItem(task.id!!, task)
+            val item = TaskListItem("${task.id!!}", task)
             when {
                 task.done -> doneList.add(item)
                 task.due -> dueList.add(item)
@@ -88,7 +107,7 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
             val headerDate =
                 LocalDateTime.of(dateGroupHelper.getDateGroupFor(it.task.dueDate), LocalTime.MIN)
             if (headerDate != todayHeader.date) {
-                scheduledHeaderList.add(HeaderListItem(-1, headerDate))
+                scheduledHeaderList.add(HeaderListItem("$headerDate", headerDate))
             }
         }
 
@@ -105,6 +124,6 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
     }
 
     fun scrollToToday() {
-        // TODO
+        scrollToToday.value = !scrollToToday.value
     }
 }

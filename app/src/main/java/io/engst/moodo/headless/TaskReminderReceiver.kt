@@ -4,23 +4,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import io.engst.moodo.model.NotificationHelper
-import io.engst.moodo.moodoIntentExtraPrefix
+import io.engst.moodo.model.types.extraTaskDescription
+import io.engst.moodo.model.types.extraTaskDueDate
+import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.extraAsString
 import io.engst.moodo.shared.inject
 import io.engst.moodo.shared.injectLogger
 
-val Intent.extraAsString: String?
-    get() = extras?.keySet()?.joinToString(", ", "[", "]") {
-        "$it => ${extras?.get(it)}"
-    }
-
 class TaskReminderReceiver : BroadcastReceiver() {
-
-    companion object {
-        const val ExtraKeyTaskId = "$moodoIntentExtraPrefix.TaskId"
-        const val ExtraKeyTaskDueDate = "$moodoIntentExtraPrefix.TaskDueDate"
-        const val ExtraKeyTaskDescription = "$moodoIntentExtraPrefix.TaskDescription"
-    }
 
     private val logger: Logger by injectLogger("headless")
     private val helper: NotificationHelper by inject()
@@ -33,22 +25,12 @@ class TaskReminderReceiver : BroadcastReceiver() {
                 // TODO: set reminders because device restarted!?
             }
             else -> {
-                val id = intent.getLongExtra(ExtraKeyTaskId, -1L)
-                val dueDate = intent.getLongExtra(ExtraKeyTaskDueDate, 0L)
-                val description = intent.getStringExtra(ExtraKeyTaskDescription) ?: "empty"
+                val id = intent.getLongExtra(extraTaskId, -1L)
+                val dueDate = intent.getLongExtra(extraTaskDueDate, 0L)
+                val description = intent.getStringExtra(extraTaskDescription) ?: "empty"
 
-                // startAlarmService(context, intent)
                 helper.showNotification(id, dueDate, description)
             }
         }
     }
-
-    /*
-    private fun startAlarmService(context: Context, intent: Intent) {
-        val serviceIntent = Intent(context, TaskReminderService::class.java).apply {
-            intent.extras?.let { putExtras(it) }
-        }
-        context.startForegroundService(serviceIntent)
-    }
-     */
 }

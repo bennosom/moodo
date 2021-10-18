@@ -21,11 +21,11 @@
     <string name="soon">Soon</string>
     <string name="later">Later</string>
 
-    <string name="task_input_description">Task</string>
+    <string name="task_input_description">Do</string>
     <string name="task_button_delete">Delete</string>
     <string name="task_button_cancel">Cancel</string>
 
-    <string name="due_date_picker_title">Due date</string>
+    <string name="due_date_picker_title">Remind at</string>
     <string name="due_date_suggestion_tomorrow">Tomorrow</string>
     <string name="due_date_suggestion_in2days">In 2 days</string>
     <string name="due_date_suggestion_next_monday">Next monday</string>
@@ -37,7 +37,8 @@
 
     <string name="notification_channel_name">Task reminder</string>
     <string name="notification_group_name">Task reminder group</string>
-    <string name="notification_channel_description">Notification channel to notify about due tasks</string>
+    <string name="notification_channel_description">Notification channel to remind your tasks</string>
     <string name="notification_action_task_done">Done</string>
     <string name="notification_action_task_shift">Shift</string>
+    <string name="task_button_add">Add</string>
 </resources>

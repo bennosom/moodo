@@ -6,14 +6,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
 import io.engst.moodo.R
-import io.engst.moodo.headless.TaskReminderReceiver.Companion.ExtraKeyTaskId
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.persistence.TaskDatabase
+import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.inject
 import io.engst.moodo.ui.tasks.TaskListViewModel
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (intent.action == Intent.ACTION_VIEW) {
-            intent.extras?.getLong(ExtraKeyTaskId)?.let { taskId ->
+            intent.extras?.getLong(extraTaskId)?.let { taskId ->
                 lifecycle.coroutineScope.launchWhenCreated {
                     val task = repository.getTask(taskId)
                     val sheet = TaskEditFragment(task)
