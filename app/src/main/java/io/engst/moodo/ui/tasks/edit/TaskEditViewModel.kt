@@ -5,49 +5,96 @@ import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
     private val logger: Logger by injectLogger("viewmodel")
 
-    var taskText: String? = null
+    var originalTask: Task? = null
         set(value) {
             field = value
-            logger.info { "set text: $field" }
+
+            description = field?.description
+            dueDate = field?.dueDate?.toLocalDate()
+            dueTime = field?.dueDate?.toLocalTime()
+
+            logger.info { "edit task: $field" }
         }
 
-    var taskDate: LocalDate? = null
-        set(value) {
-            field = value
-            logger.info { "set date: $field" }
-        }
+    var description: String? = null
+    var dueDate: LocalDate? = null
+    var dueTime: LocalTime? = null
 
-    var taskTime: LocalTime? = null
-        set(value) {
-            field = value
-            logger.info { "set time: $field" }
-        }
+    fun deleteTask() {
+        logger.info { "deleteTask" }
 
-    fun addTask(task: Task) {
-        GlobalScope.launch(Dispatchers.Default) {
-            taskRepository.addTask(task)
+        originalTask?.let {
+            GlobalScope.launch {
+                taskRepository.deleteTask(it)
+            }
+        } ?: Unit.let {
+            logger.warn { "task not existing" }
         }
     }
 
-    fun updateTask(task: Task) {
-        GlobalScope.launch(Dispatchers.Default) {
-            taskRepository.updateTask(task)
+    fun saveChanges() {
+        logger.info { "saveChanges" }
+
+        description?.let {
+            if (it.isBlank()) {
+                logger.info { "delete task, because text has been removed" }
+
+                deleteTask()
+                return@saveChanges
+            }
+        }
+
+        val dueDateTime = buildDueDateTime()
+
+        originalTask?.let {
+            val updatedTask = it.copy(
+                description = description ?: "",
+                dueDate = dueDateTime,
+                doneDate = dueDateTime?.let { null } ?: it.doneDate
+            )
+
+            if (hasChanged()) {
+                GlobalScope.launch { taskRepository.updateTask(updatedTask) }
+            } else {
+                logger.info { "nothing changed" }
+            }
+        } ?: Unit.let {
+            val newTask = Task(
+                description = description ?: "",
+                createdDate = LocalDateTime.now(),
+                dueDate = dueDateTime
+            )
+
+            if (hasChanged()) {
+                GlobalScope.launch { taskRepository.addTask(newTask) }
+            } else {
+                logger.info { "nothing changed" }
+            }
         }
     }
 
-    fun deleteTask(task: Task) {
-        GlobalScope.launch(Dispatchers.Default) {
-            taskRepository.deleteTask(task)
+    private fun hasChanged(): Boolean =
+        originalTask?.let {
+            it.description != description ||
+                    it.dueDate != buildDueDateTime()
+        } ?: true
+
+
+    private fun buildDueDateTime(): LocalDateTime? =
+        if (dueDate != null) {
+            val dueTime = dueTime ?: LocalTime.of(9, 0)
+            LocalDateTime.of(dueDate, dueTime)
+        } else {
+            null
         }
-    }
 }

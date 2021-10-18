@@ -24,6 +24,8 @@
     <string name="task_input_description">Do</string>
     <string name="task_button_delete">Delete</string>
     <string name="task_button_cancel">Cancel</string>
+    <string name="task_button_add">Add</string>
+    <string name="task_done_at">Finished at %1$s</string>
 
     <string name="due_date_picker_title">Remind at</string>
     <string name="due_date_suggestion_tomorrow">Tomorrow</string>
@@ -40,5 +42,4 @@
     <string name="notification_channel_description">Notification channel to remind your tasks</string>
     <string name="notification_action_task_done">Done</string>
     <string name="notification_action_task_shift">Shift</string>
-    <string name="task_button_add">Add</string>
 </resources>
