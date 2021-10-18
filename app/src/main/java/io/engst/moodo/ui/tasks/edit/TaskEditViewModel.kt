@@ -56,12 +56,16 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
 
         val dueDateTime = buildDueDateTime()
 
-        originalTask?.let {
-            val updatedTask = it.copy(
+        originalTask?.let { original ->
+            val updatedTask = original.copy(
                 description = description ?: "",
-                dueDate = dueDateTime,
-                doneDate = dueDateTime?.let { null } ?: it.doneDate
+                dueDate = dueDateTime
             )
+
+            // fix done date if due date has changed
+            if (dueDateTime != original.dueDate) {
+                updatedTask.doneDate = null
+            }
 
             if (hasChanged()) {
                 GlobalScope.launch { taskRepository.updateTask(updatedTask) }
