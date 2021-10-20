@@ -1,12 +1,13 @@
 package io.engst.moodo.ui.tasks
 
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
 import io.engst.moodo.model.types.Task
@@ -49,14 +50,23 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
                 this.item = item
 
                 with(binding) {
-                    descriptionText.text = item.task.description
-                    dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
-                    val textColor = root.resources.getColor(
-                        if (item.task.due) R.color.task_due_date_expired
-                        else R.color.task_due_date_scheduled,
-                        root.context.theme
+                    descriptionText.paintFlags = if (item.task.done) {
+                        Paint.STRIKE_THRU_TEXT_FLAG
+                    } else {
+                        0
+                    }
+                    descriptionText.setTypeface(
+                        null,
+                        if (item.task.due) Typeface.BOLD else Typeface.NORMAL
                     )
-                    dueDate.setTextColor(textColor)
+                    descriptionText.text = item.task.description
+
+                    dueDate.setTypeface(
+                        null,
+                        if (item.task.done) Typeface.ITALIC else Typeface.NORMAL
+                    )
+                    dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
+
                     root.setOnClickListener {
                         onClick(item.task)
                     }

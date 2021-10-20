@@ -19,5 +19,5 @@ data class Task(
         get() = !done && dueDate != null
 
     val due: Boolean
-        get() = !done && dueDate?.let { it <= LocalDateTime.now() } ?: true
+        get() = !done && (dueDate?.let { it <= LocalDateTime.now() } ?: false)
 }

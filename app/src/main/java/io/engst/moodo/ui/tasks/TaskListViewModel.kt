@@ -98,7 +98,9 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
             val item = TaskListItem("${task.id!!}", task)
             when {
                 task.done -> doneList.add(item)
-                task.due -> dueList.add(item)
+                !task.done && task.dueDate?.let { it <= LocalDateTime.now() } ?: true -> dueList.add(
+                    item
+                )
                 task.scheduled -> scheduledList.add(item)
             }
         }

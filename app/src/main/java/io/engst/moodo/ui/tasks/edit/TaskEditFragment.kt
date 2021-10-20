@@ -204,6 +204,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
     private fun getSuggestedDate(suggestion: DateSuggestion): LocalDate {
         return when (suggestion) {
+            DateSuggestion.Today -> LocalDate.now()
             DateSuggestion.Tomorrow -> LocalDate.now().plusDays(1)
             DateSuggestion.In2Days -> LocalDate.now().plusDays(2)
             DateSuggestion.NextMonday -> LocalDate.now().plusWeeks(1).with(DayOfWeek.MONDAY)

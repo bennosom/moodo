@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/task_button_delete"
-            android:textColor="#ff0000" />
+            android:textColor="@color/warning_red_700" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -3,6 +3,7 @@ package io.engst.moodo.model.types
 import io.engst.moodo.R
 
 enum class DateSuggestion {
+    Today,
     Tomorrow,
     In2Days,
     NextMonday,
@@ -11,6 +12,7 @@ enum class DateSuggestion {
 
 val DateSuggestion.textId: Int
     get() = when (this) {
+        DateSuggestion.Today -> R.string.due_date_suggestion_today
         DateSuggestion.Tomorrow -> R.string.due_date_suggestion_tomorrow
         DateSuggestion.In2Days -> R.string.due_date_suggestion_in2days
         DateSuggestion.NextMonday -> R.string.due_date_suggestion_next_monday

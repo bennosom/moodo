@@ -13,6 +13,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import io.engst.moodo.R
 import io.engst.moodo.ui.MainActivity
 import java.io.File
 import java.time.LocalDateTime
@@ -82,7 +83,11 @@ abstract class TaskDatabase : RoomDatabase() {
             databaseFile.copyTo(File("$backupPath/$fileName"))
 
             Log.d(LOG_TAG, "Saved $fileName to $backupPath")
-            Toast.makeText(context, "Backup successfully", Toast.LENGTH_LONG)
+            Toast.makeText(
+                context,
+                context.getString(R.string.dialog_backup_success),
+                Toast.LENGTH_LONG
+            )
                 .show()
             restartApp(context)
         }
@@ -93,14 +98,18 @@ abstract class TaskDatabase : RoomDatabase() {
 
             if (backupFiles.isNullOrEmpty()) {
                 Log.w(LOG_TAG, "No backups available at $backupPath")
-                Toast.makeText(context, "No backups found", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.dialog_backup_not_available),
+                    Toast.LENGTH_LONG
+                ).show()
                 return
             }
 
             val backupFileArray = backupFiles.map { it.name }.toTypedArray()
 
             MaterialAlertDialogBuilder(context)
-                .setTitle("Restore database")
+                .setTitle(context.getString(R.string.dialog_restore_database))
                 .setItems(backupFileArray) { _, which ->
                     val fileName = backupFileArray[which]
                     val file = File("$backupPath/$fileName")

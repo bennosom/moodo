@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primaryColor">#2196f3</color>
-    <color name="primaryLightColor">#6ec6ff</color>
-    <color name="primaryDarkColor">#0069c0</color>
-    <color name="secondaryColor">#283593</color>
-    <color name="secondaryLightColor">#5f5fc4</color>
-    <color name="secondaryDarkColor">#001064</color>
-    <color name="primaryTextColor">#000000</color>
+    <color name="primaryColor">#344955</color>
+    <color name="primaryLightColor">#5f7481</color>
+    <color name="primaryDarkColor">#0b222c</color>
+    <color name="primaryTextColor">#ffffff</color>
+
+    <color name="secondaryColor">#2196f3</color>
+    <color name="secondaryLightColor">#6ec6ff</color>
+    <color name="secondaryDarkColor">#0069c0</color>
     <color name="secondaryTextColor">#ffffff</color>
 
-    <color name="task_due_date_scheduled">#000000</color>
-    <color name="task_due_date_expired">#000000</color>
-    <color name="task_done">#ccc</color>
+    <!--    <color name="secondaryColor">#f9aa33</color>
+        <color name="secondaryLightColor">#ffdc65</color>
+        <color name="secondaryDarkColor">#c17b00</color>
+        <color name="secondaryTextColor">#000000</color>-->
 
     <color name="ic_launcher_background">#ffffff</color>
-    <!-- #202F41 -->
+
+    <color name="backgroundColor">#F1F1F1</color>
+
+    <color name="task_list_item_due_date">#474747</color>
+
+    <color name="tolles_hellblau">#2196f3</color>
+    <color name="tolles_blau">#202F41</color>
+    <color name="warning_red_700">#D32F2F</color>
 </resources>

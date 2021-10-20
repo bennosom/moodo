@@ -9,6 +9,10 @@
     <string name="action_info">About</string>
     <string name="action_description_about">About Moodo</string>
 
+    <string name="dialog_restore_database">Select database to restore:</string>
+    <string name="dialog_backup_success">Backup successfully</string>
+    <string name="dialog_backup_not_available">No backups found</string>
+
     <string name="shift_by_nothing">Today</string>
     <string name="shift_by_one_day">1 day</string>
     <string name="shift_by_two_days">2 days</string>
@@ -28,13 +32,14 @@
     <string name="task_done_at">Finished at %1$s</string>
 
     <string name="due_date_picker_title">Remind at</string>
+    <string name="due_date_suggestion_today">Today</string>
     <string name="due_date_suggestion_tomorrow">Tomorrow</string>
     <string name="due_date_suggestion_in2days">In 2 days</string>
     <string name="due_date_suggestion_next_monday">Next monday</string>
     <string name="due_date_custom">Other</string>
-    <string name="due_time_suggestion_morning">Morning</string>
-    <string name="due_time_suggestion_midday">Midday</string>
-    <string name="due_time_suggestion_afternoon">Afternoon</string>
+    <string name="due_time_suggestion_morning">9:00</string>
+    <string name="due_time_suggestion_midday">12:00</string>
+    <string name="due_time_suggestion_afternoon">15:00</string>
     <string name="due_time_custom">Other</string>
 
     <string name="notification_channel_name">Task reminder</string>

@@ -10,7 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <!-- android:background="@{task.doneDate != null ? @color/task_done : @color/white}" -->
 
         <TextView
             android:id="@+id/description_text"
@@ -29,6 +28,7 @@
             android:layout_gravity="end"
             android:paddingHorizontal="16dp"
             android:paddingBottom="4dp"
+            android:textColor="@color/task_list_item_due_date"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
             tools:text="MMMMMMMMMMMMMM" />
     </LinearLayout>
