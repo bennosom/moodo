@@ -1,5 +1,6 @@
 package io.engst.moodo.ui.tasks
 
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.LayoutInflater
@@ -51,21 +52,17 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
 
                 with(binding) {
                     descriptionText.paintFlags = if (item.task.done) {
-                        Paint.STRIKE_THRU_TEXT_FLAG
+                        descriptionText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                     } else {
-                        0
+                        descriptionText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     }
-                    descriptionText.setTypeface(
-                        null,
-                        if (item.task.due) Typeface.BOLD else Typeface.NORMAL
-                    )
+                    descriptionText.typeface =
+                        if (item.task.due) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
                     descriptionText.text = item.task.description
+                    descriptionText.setTextColor(if (item.task.done) Color.GRAY else Color.BLACK)
 
-                    dueDate.setTypeface(
-                        null,
-                        if (item.task.done) Typeface.ITALIC else Typeface.NORMAL
-                    )
                     dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
+                    dueDate.setTextColor(if (item.task.done) Color.GRAY else Color.BLACK)
 
                     root.setOnClickListener {
                         onClick(item.task)

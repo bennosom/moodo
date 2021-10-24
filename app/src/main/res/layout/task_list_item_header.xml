@@ -7,4 +7,6 @@
     android:paddingBottom="4dp"
     android:textAlignment="center"
     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+    android:textAllCaps="true"
+    android:textColor="#666"
     tools:text="Header" />

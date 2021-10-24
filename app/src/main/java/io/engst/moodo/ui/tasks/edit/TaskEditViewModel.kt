@@ -19,14 +19,14 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
         set(value) {
             field = value
 
-            description = field?.description
+            description = field?.description ?: ""
             dueDate = field?.dueDate?.toLocalDate()
             dueTime = field?.dueDate?.toLocalTime()
 
             logger.info { "edit task: $field" }
         }
 
-    var description: String? = null
+    var description: String = ""
     var dueDate: LocalDate? = null
     var dueTime: LocalTime? = null
 
@@ -45,20 +45,18 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
     fun saveChanges() {
         logger.info { "saveChanges" }
 
-        description?.let {
-            if (it.isBlank()) {
-                logger.info { "delete task, because text has been removed" }
+        val dueDateTime = buildDueDate()
+
+        originalTask?.let { original ->
+            if (description.isBlank()) {
+                logger.info { "delete task, because description has been removed" }
 
                 deleteTask()
                 return@saveChanges
             }
-        }
 
-        val dueDateTime = buildDueDateTime()
-
-        originalTask?.let { original ->
             val updatedTask = original.copy(
-                description = description ?: "",
+                description = description,
                 dueDate = dueDateTime
             )
 
@@ -67,19 +65,19 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
                 updatedTask.doneDate = null
             }
 
-            if (hasChanged()) {
+            if (hasDescriptionOrDueDateChanged()) {
                 GlobalScope.launch { taskRepository.updateTask(updatedTask) }
             } else {
                 logger.info { "nothing changed" }
             }
         } ?: Unit.let {
             val newTask = Task(
-                description = description ?: "",
+                description = description,
                 createdDate = LocalDateTime.now(),
                 dueDate = dueDateTime
             )
 
-            if (hasChanged()) {
+            if (hasDescriptionOrDueDateChanged()) {
                 GlobalScope.launch { taskRepository.addTask(newTask) }
             } else {
                 logger.info { "nothing changed" }
@@ -87,18 +85,39 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
     }
 
-    private fun hasChanged(): Boolean =
+    private fun hasDescriptionOrDueDateChanged(): Boolean =
         originalTask?.let {
             it.description != description ||
-                    it.dueDate != buildDueDateTime()
+                    it.dueDate != buildDueDate()
         } ?: true
 
 
-    private fun buildDueDateTime(): LocalDateTime? =
-        if (dueDate != null) {
-            val dueTime = dueTime ?: LocalTime.of(9, 0)
-            LocalDateTime.of(dueDate, dueTime)
-        } else {
-            null
+    private fun buildDueDate(): LocalDateTime? =
+        dueDate?.let {
+            LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
         }
+
+    fun addNewTask() {
+        if (description.isBlank()) {
+            logger.error { "emtpy description, do nothing" }
+            return
+        }
+        val newTask = Task(
+            description = description,
+            createdDate = LocalDateTime.now(),
+            dueDate = buildDueDate()
+        )
+        GlobalScope.launch { taskRepository.addTask(newTask) }
+    }
+
+    fun setTaskDone() {
+        originalTask?.let { original ->
+            val updatedTask = original.copy(
+                doneDate = LocalDateTime.now()
+            )
+            GlobalScope.launch { taskRepository.updateTask(updatedTask) }
+        } ?: Unit.let {
+            logger.error { "failed to set task to done: no task set" }
+        }
+    }
 }

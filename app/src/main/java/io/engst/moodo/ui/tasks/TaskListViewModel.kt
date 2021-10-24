@@ -91,6 +91,7 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
             date = todayDate
         )
         val dueList = mutableListOf<TaskListItem>()
+        val unscheduledList = mutableListOf<TaskListItem>()
         val scheduledHeaderList = mutableSetOf<HeaderListItem>()
         val scheduledList = mutableListOf<TaskListItem>()
 
@@ -98,10 +99,8 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
             val item = TaskListItem("${task.id!!}", task)
             when {
                 task.done -> doneList.add(item)
-                !task.done && task.dueDate?.let { it <= LocalDateTime.now() } ?: true -> dueList.add(
-                    item
-                )
-                task.scheduled -> scheduledList.add(item)
+                task.scheduled -> if (task.due) dueList.add(item) else scheduledList.add(item)
+                else -> unscheduledList.add(item)
             }
         }
 
@@ -114,7 +113,7 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
         }
 
         val sortedDoneList = doneList.sortedBy { it.task.doneDate }
-        val sortedDueList = dueList.sortedBy { it.task.createdDate }
+        val sortedDueList = dueList.sortedBy { it.task.dueDate }
         val sortedScheduledList = (scheduledHeaderList + scheduledList).sortedBy {
             when (it) {
                 is TaskListItem -> it.task.dueDate
@@ -122,7 +121,7 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
             }
         }
 
-        return sortedDoneList + todayHeader + sortedDueList + sortedScheduledList
+        return sortedDoneList + todayHeader + sortedDueList + unscheduledList + sortedScheduledList
     }
 
     fun scrollToToday() {
