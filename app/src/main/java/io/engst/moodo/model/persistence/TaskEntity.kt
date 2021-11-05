@@ -23,21 +23,8 @@ data class TaskEntity constructor(
                 createdDate = task.createdDate,
                 dueDate = task.dueDate,
                 doneDate = task.doneDate,
-                redoCount = task.redoCount,
-                shiftCount = task.shiftCount
+                redoCount = 0,
+                shiftCount = 0
             )
     }
 }
-
-fun List<TaskEntity>.toTaskList(): List<Task> = map { it.toTask() }
-
-fun TaskEntity.toTask(): Task =
-    Task(
-        id = id!!,
-        description = description,
-        createdDate = createdDate,
-        dueDate = dueDate,
-        doneDate = doneDate,
-        redoCount = redoCount,
-        shiftCount = shiftCount
-    )

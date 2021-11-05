@@ -12,6 +12,14 @@
         android:orientation="vertical"
         android:paddingHorizontal="8dp">
 
+        <ImageView
+            android:id="@+id/handle"
+            android:layout_width="32dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="5dp"
+            android:layout_gravity="center"
+            android:background="@drawable/handle" />
+
         <TextView
             android:id="@+id/text_done"
             android:layout_width="match_parent"

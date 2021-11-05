@@ -1,37 +1,40 @@
 package io.engst.moodo.ui.tasks
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import java.time.Clock
 import java.time.LocalDateTime
-import java.time.LocalTime
+import java.util.Locale
 
-class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel() {
-
-    companion object {
-        const val todayHeaderId = "Today"
-    }
+class TaskListViewModel(
+    private val context: Context,
+    private val dispatcher: CoroutineDispatcher,
+    private val taskRepository: TaskRepository,
+    private val clock: Clock,
+    private val locale: Locale
+) : ViewModel() {
 
     val scrollToToday: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val tasks: Flow<List<ListItem>> = taskRepository.tasks
         .map { sortTasksWithHeader(it) }
-        .flowOn(Dispatchers.Default)
+        .flowOn(dispatcher)
 
     fun shift(task: Task, shiftBy: DateShift) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(dispatcher) {
             val baseDate = when {
-                task.scheduled && !task.done && !task.due -> task.dueDate!!
-                else -> LocalDateTime.now()
+                task.isScheduled && !task.isDone && !task.isDue -> task.dueDate!!
+                else -> LocalDateTime.now(clock)
             }
 
             val shiftedDueDate = when (shiftBy) {
@@ -44,23 +47,21 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
 
             val update = task.copy(
                 dueDate = shiftedDueDate,
-                doneDate = null,
-                shiftCount = task.shiftCount + 1,
-                redoCount = if (task.doneDate != null) task.redoCount + 1 else 0
+                doneDate = null
             )
             taskRepository.updateTask(update)
         }
     }
 
     fun setDone(task: Task) {
-        viewModelScope.launch(Dispatchers.Default) {
-            val update = task.copy(doneDate = LocalDateTime.now())
+        viewModelScope.launch(dispatcher) {
+            val update = task.copy(doneDate = LocalDateTime.now(clock))
             taskRepository.updateTask(update)
         }
     }
 
     fun setUndone(task: Task) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(dispatcher) {
             val update = task.copy(
                 dueDate = null,
                 doneDate = null
@@ -70,58 +71,61 @@ class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel(
     }
 
     fun undoDelete(task: Task) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(dispatcher) {
             taskRepository.addTask(task)
         }
     }
 
     fun delete(task: Task) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(dispatcher) {
             taskRepository.deleteTask(task)
         }
     }
 
     private fun sortTasksWithHeader(tasks: List<Task>): List<ListItem> {
-        val dateGroupHelper = TaskListGroupHelper(LocalDate.now())
-        val todayDate = LocalDateTime.of(dateGroupHelper.today, LocalTime.MIN)
+        val helper = TaskListGroupHelper(LocalDateTime.now(clock), locale)
+        val groupItemToday = helper.getGroupItem(Group.Today)
 
         val doneList = mutableListOf<TaskListItem>()
-        val todayHeader = HeaderListItem(
-            id = todayHeaderId,
-            date = todayDate
-        )
         val dueList = mutableListOf<TaskListItem>()
         val unscheduledList = mutableListOf<TaskListItem>()
-        val scheduledHeaderList = mutableSetOf<HeaderListItem>()
         val scheduledList = mutableListOf<TaskListItem>()
 
         tasks.forEach { task ->
-            val item = TaskListItem("${task.id!!}", task)
+            val item = TaskListItem(
+                id = "${task.id!!}",
+                index = 0,
+                dateText = helper.format(
+                    context,
+                    dateTime = task.doneDate ?: task.dueDate,
+                    done = task.isDone,
+                    isDue = task.isDue
+                ),
+                task = task
+            )
             when {
-                task.done -> doneList.add(item)
-                task.scheduled -> if (task.due) dueList.add(item) else scheduledList.add(item)
+                task.isDone -> doneList.add(item)
+                task.isScheduled -> if (task.isDue) dueList.add(item) else scheduledList.add(item)
                 else -> unscheduledList.add(item)
             }
         }
 
-        scheduledList.forEach {
-            val headerDate =
-                LocalDateTime.of(dateGroupHelper.getDateGroupFor(it.task.dueDate), LocalTime.MIN)
-            if (headerDate != todayHeader.date) {
-                scheduledHeaderList.add(HeaderListItem("$headerDate", headerDate))
+        val scheduledHeaderList = scheduledList.mapNotNull { it.task.dueDate }.mapNotNull { date ->
+            helper.getGroup(date).takeIf { it != Group.Today }?.let { group ->
+                helper.getGroupItem(group)
             }
-        }
+        }.toSet().toList()
 
         val sortedDoneList = doneList.sortedBy { it.task.doneDate }
         val sortedDueList = dueList.sortedBy { it.task.dueDate }
         val sortedScheduledList = (scheduledHeaderList + scheduledList).sortedBy {
             when (it) {
                 is TaskListItem -> it.task.dueDate
-                is HeaderListItem -> it.date
+                is GroupListItem -> it.date
             }
         }
 
-        return sortedDoneList + todayHeader + sortedDueList + unscheduledList + sortedScheduledList
+        return sortedDoneList + groupItemToday + sortedDueList + unscheduledList + sortedScheduledList
     }
 
     fun scrollToToday() {

@@ -5,16 +5,16 @@ import io.engst.moodo.R
 enum class DateSuggestion {
     Today,
     Tomorrow,
-    In2Days,
-    NextMonday,
+    NextWeek,
+    Later,
     Custom
 }
 
 val DateSuggestion.textId: Int
     get() = when (this) {
-        DateSuggestion.Today -> R.string.due_date_suggestion_today
-        DateSuggestion.Tomorrow -> R.string.due_date_suggestion_tomorrow
-        DateSuggestion.In2Days -> R.string.due_date_suggestion_in2days
-        DateSuggestion.NextMonday -> R.string.due_date_suggestion_next_monday
+        DateSuggestion.Today -> R.string.today
+        DateSuggestion.Tomorrow -> R.string.tomorrow
+        DateSuggestion.NextWeek -> R.string.next_week
+        DateSuggestion.Later -> R.string.later
         DateSuggestion.Custom -> R.string.due_date_custom
     }

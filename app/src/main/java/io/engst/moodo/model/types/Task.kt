@@ -6,18 +6,14 @@ import java.time.LocalDateTime
 data class Task(
     val id: Long? = null,
     var description: String = "",
-    val createdDate: LocalDateTime = LocalDateTime.now(),
+    val createdDate: LocalDateTime,
     var dueDate: LocalDateTime? = null,
-    var doneDate: LocalDateTime? = null,
-    var redoCount: Int = 0,
-    var shiftCount: Int = 0
+    val isDue: Boolean,
+    var doneDate: LocalDateTime? = null
 ) : Serializable {
-    val done: Boolean
+    val isDone: Boolean
         get() = doneDate != null
 
-    val scheduled: Boolean
-        get() = !done && dueDate != null
-
-    val due: Boolean
-        get() = !done && (dueDate?.let { it <= LocalDateTime.now() } ?: false)
+    val isScheduled: Boolean
+        get() = !isDone && dueDate != null
 }

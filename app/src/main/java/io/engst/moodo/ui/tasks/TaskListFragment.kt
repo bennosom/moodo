@@ -15,7 +15,6 @@ import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
-import io.engst.moodo.ui.tasks.TaskListViewModel.Companion.todayHeaderId
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -62,7 +61,7 @@ class TaskListFragment : Fragment() {
                 val taskViewHolder =
                     binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
                 val task = (taskViewHolder.item as TaskListItem).task
-                if (task.done) {
+                if (task.isDone) {
                     viewModel.setUndone(task)
                 } else {
                     viewModel.shift(task, shiftBy)
@@ -91,7 +90,8 @@ class TaskListFragment : Fragment() {
 
         lifecycle.coroutineScope.launchWhenResumed {
             viewModel.scrollToToday.collect { _ ->
-                taskListAdapter!!.currentList.map { it.id }.indexOf(todayHeaderId)
+                taskListAdapter!!.currentList.map { it.id }
+                    .indexOf(Group.Today.name)
                     .takeIf { it != -1 }?.let { todayPosition ->
                         binding.taskList.smoothScrollToPosition(todayPosition)
                     }

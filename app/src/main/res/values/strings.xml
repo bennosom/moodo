@@ -19,10 +19,17 @@
     <string name="shift_by_one_week">1 week</string>
     <string name="shift_by_one_month">1 month</string>
 
+    <string name="now">now</string>
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>
-    <string name="day_after_tomorrow">Day after tomorrow</string>
-    <string name="soon">Soon</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+    <string name="next_week">Next week</string>
     <string name="later">Later</string>
 
     <string name="task_input_description">Do</string>
@@ -32,14 +39,11 @@
     <string name="task_done_at">Last done at %1$s</string>
 
     <string name="due_date_picker_title">Remind at</string>
-    <string name="due_date_suggestion_today">Today</string>
-    <string name="due_date_suggestion_tomorrow">Tomorrow</string>
-    <string name="due_date_suggestion_in2days">In 2 days</string>
-    <string name="due_date_suggestion_next_monday">Next monday</string>
     <string name="due_date_custom">Other</string>
     <string name="due_time_suggestion_morning">9:00</string>
     <string name="due_time_suggestion_midday">12:00</string>
     <string name="due_time_suggestion_afternoon">15:00</string>
+    <string name="due_time_suggestion_evening">18:00</string>
     <string name="due_time_custom">Other</string>
 
     <string name="notification_channel_name">Task reminder</string>

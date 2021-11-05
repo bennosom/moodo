@@ -2,8 +2,6 @@ package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskEntity
-import io.engst.moodo.model.persistence.toTask
-import io.engst.moodo.model.persistence.toTaskList
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
@@ -19,16 +17,18 @@ import java.time.LocalDateTime
 
 class TaskRepository(
     private val taskDao: TaskDao,
-    private val scheduler: ReminderScheduler
+    private val scheduler: ReminderScheduler,
+    private val taskFactory: TaskFactory
 ) {
     private val logger: Logger by injectLogger("model")
 
     val tasks: Flow<List<Task>> =
-        taskDao.getTasks().map { it.toTaskList() }.flowOn(Dispatchers.IO)
+        taskDao.getTasks().map { taskFactory.createTaskList(it) }.flowOn(Dispatchers.IO)
 
     fun getTask(id: Long): Task {
         return runBlocking(Dispatchers.IO) {
-            return@runBlocking taskDao.getTaskById(id).toTask()
+            val entity = taskDao.getTaskById(id)
+            return@runBlocking taskFactory.createTask(entity)
         }
     }
 

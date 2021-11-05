@@ -60,7 +60,7 @@ abstract class SwipeTaskCallback(val context: Context) :
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         val holder = viewHolder as TaskListAdapter.ViewHolder.TaskViewHolder
         if (direction == ItemTouchHelper.LEFT) {
-            if ((holder.item as TaskListItem).task.done) {
+            if ((holder.item as TaskListItem).task.isDone) {
                 onDelete(viewHolder.adapterPosition)
             } else {
                 onDone(viewHolder.adapterPosition)
@@ -90,7 +90,7 @@ abstract class SwipeTaskCallback(val context: Context) :
         val dRatio = dX / itemView.width
         val tx = dX.toInt()
         val swipeRight = tx >= 0
-        val mode = if (task.done) 1 else 0
+        val mode = if (task.isDone) 1 else 0
 
         if (tx == 0 || tx == -itemView.width) {
             return super.onChildDraw(

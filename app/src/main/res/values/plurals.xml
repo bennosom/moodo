@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="since_x_hours">
+        <item quantity="one">since %d hour</item>
+        <item quantity="other">since %d hours</item>
+    </plurals>
+    <plurals name="since_x_days">
+        <item quantity="one">since %d day</item>
+        <item quantity="other">since %d days</item>
+    </plurals>
+    <plurals name="since_x_weeks">
+        <item quantity="one">since %d week</item>
+        <item quantity="other">since %d weeks</item>
+    </plurals>
+    <plurals name="since_x_months">
+        <item quantity="one">since %d month</item>
+        <item quantity="other">since %d months</item>
+    </plurals>
+    <plurals name="since_x_years">
+        <item quantity="one">since %d year</item>
+        <item quantity="other">since %d years</item>
+    </plurals>
+</resources>

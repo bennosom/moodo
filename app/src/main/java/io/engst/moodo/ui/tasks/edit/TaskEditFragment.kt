@@ -1,5 +1,6 @@
 package io.engst.moodo.ui.tasks.edit
 
+import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -13,6 +14,8 @@ import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -25,7 +28,7 @@ import io.engst.moodo.model.types.DateSuggestion
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
-import io.engst.moodo.shared.prettyFormat
+import io.engst.moodo.ui.prettyFormat
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.DayOfWeek
 import java.time.Instant
@@ -47,6 +50,12 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         viewModel.originalTask = task
     }
 
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val bottomSheetDialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        bottomSheetDialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        return bottomSheetDialog
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -64,7 +73,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.originalTask?.let {
-            binding.textDone.isVisible = it.done
+            binding.textDone.isVisible = it.isDone
             binding.textDone.text = getString(R.string.task_done_at, it.doneDate?.prettyFormat)
         }
 
@@ -219,11 +228,12 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun getSuggestedDate(suggestion: DateSuggestion): LocalDate {
+        val now = LocalDate.now()
         return when (suggestion) {
-            DateSuggestion.Today -> LocalDate.now()
-            DateSuggestion.Tomorrow -> LocalDate.now().plusDays(1)
-            DateSuggestion.In2Days -> LocalDate.now().plusDays(2)
-            DateSuggestion.NextMonday -> LocalDate.now().plusWeeks(1).with(DayOfWeek.MONDAY)
+            DateSuggestion.Today -> now
+            DateSuggestion.Tomorrow -> now.plusDays(1)
+            DateSuggestion.NextWeek -> now.plusWeeks(1).with(DayOfWeek.MONDAY)
+            DateSuggestion.Later -> now.plusDays(2).with(DayOfWeek.MONDAY)
             else -> throw IllegalArgumentException("invalid date")
         }
     }
@@ -233,6 +243,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             TimeSuggestion.Morning -> LocalTime.of(9, 0)
             TimeSuggestion.Midday -> LocalTime.of(12, 0)
             TimeSuggestion.Afternoon -> LocalTime.of(15, 0)
+            TimeSuggestion.Evening -> LocalTime.of(18, 0)
             else -> throw IllegalArgumentException("invalid time")
         }
     }

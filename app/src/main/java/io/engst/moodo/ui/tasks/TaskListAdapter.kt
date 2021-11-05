@@ -12,21 +12,24 @@ import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
 import io.engst.moodo.model.types.Task
-import io.engst.moodo.shared.prettyFormat
-import io.engst.moodo.shared.prettyFormatRelative
 import java.time.LocalDateTime
 
 sealed class ListItem {
     abstract val id: String
+    abstract val index: Int
 }
 
-data class HeaderListItem(
+data class GroupListItem(
     override val id: String,
+    override val index: Int,
+    val labelResId: Int,
     val date: LocalDateTime
 ) : ListItem()
 
 data class TaskListItem(
     override val id: String,
+    override val index: Int,
+    val dateText: String,
     val task: Task
 ) : ListItem()
 
@@ -51,18 +54,21 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
                 this.item = item
 
                 with(binding) {
-                    descriptionText.paintFlags = if (item.task.done) {
+                    descriptionText.paintFlags = if (item.task.isDone) {
                         descriptionText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                     } else {
                         descriptionText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     }
-                    descriptionText.typeface =
-                        if (item.task.due) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                    descriptionText.typeface = if (item.task.isDue && !item.task.isDone) {
+                        Typeface.DEFAULT_BOLD
+                    } else {
+                        Typeface.DEFAULT
+                    }
                     descriptionText.text = item.task.description
-                    descriptionText.setTextColor(if (item.task.done) Color.GRAY else Color.BLACK)
+                    descriptionText.setTextColor(if (item.task.isDone) Color.GRAY else Color.BLACK)
 
-                    dueDate.text = (item.task.doneDate ?: item.task.dueDate)?.prettyFormat
-                    dueDate.setTextColor(if (item.task.done) Color.GRAY else Color.BLACK)
+                    dueDate.text = item.dateText
+                    dueDate.setTextColor(if (item.task.isDone) Color.GRAY else Color.BLACK)
 
                     root.setOnClickListener {
                         onClick(item.task)
@@ -74,17 +80,16 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
         class HeaderViewHolder(
             private val binding: TaskListItemHeaderBinding
         ) : ViewHolder(binding.root) {
-            fun bind(item: HeaderListItem) {
+            fun bind(item: GroupListItem) {
                 this.item = item
 
-                binding.headerText.text =
-                    binding.root.context.getString(item.date.prettyFormatRelative)
+                binding.headerText.text = binding.root.context.getString(item.labelResId)
             }
         }
     }
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
-        is HeaderListItem -> ViewType.Header.ordinal
+        is GroupListItem -> ViewType.Header.ordinal
         is TaskListItem -> ViewType.Task.ordinal
         else -> throw IllegalArgumentException("unknown list item type")
     }
@@ -107,7 +112,7 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = when (holder) {
         is ViewHolder.HeaderViewHolder -> {
-            holder.bind(getItem(position) as HeaderListItem)
+            holder.bind(getItem(position) as GroupListItem)
         }
         is ViewHolder.TaskViewHolder -> {
             holder.bind(getItem(position) as TaskListItem)
@@ -118,7 +123,7 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
     object ItemDiffer : DiffUtil.ItemCallback<ListItem>() {
         override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
             return when {
-                oldItem is HeaderListItem && newItem is HeaderListItem -> oldItem.date == newItem.date
+                oldItem is GroupListItem && newItem is GroupListItem -> oldItem.date == newItem.date
                 oldItem is TaskListItem && newItem is TaskListItem -> oldItem.id == newItem.id
                 else -> false
             }

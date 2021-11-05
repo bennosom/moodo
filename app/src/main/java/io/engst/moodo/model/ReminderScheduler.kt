@@ -37,7 +37,7 @@ class ReminderScheduler(
 
         removeNotifications(task)
 
-        if (task.scheduled) {
+        if (task.isScheduled) {
             task.dueDate?.let {
                 val alarmIntent = buildIntent(task)
                 val triggerAtMillis = task.dueDate!!.msecsSinceEpoch

@@ -74,7 +74,8 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
             val newTask = Task(
                 description = description,
                 createdDate = LocalDateTime.now(),
-                dueDate = dueDateTime
+                dueDate = dueDateTime,
+                isDue = false
             )
 
             if (hasDescriptionOrDueDateChanged()) {
@@ -105,7 +106,8 @@ class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel(
         val newTask = Task(
             description = description,
             createdDate = LocalDateTime.now(),
-            dueDate = buildDueDate()
+            dueDate = buildDueDate(),
+            isDue = false
         )
         GlobalScope.launch { taskRepository.addTask(newTask) }
     }
