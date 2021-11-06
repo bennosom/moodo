@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
+    // Tasks
+
     @Query("SELECT * FROM task ORDER BY date(dueDate) ASC")
     fun getTasks(): Flow<List<TaskEntity>>
 
@@ -25,4 +27,21 @@ interface TaskDao {
 
     @Update
     suspend fun updateOrder(listOrderEntity: TaskListOrderEntity)
+
+    // Tags
+
+    @Query("SELECT * FROM tag")
+    fun getTags(): Flow<List<TagEntity>>
+
+    @Query("SELECT * FROM tag WHERE id == :id")
+    fun getTag(id: Long): TagEntity
+
+    @Insert
+    suspend fun addTag(vararg task: TagEntity): List<Long>
+
+    @Update
+    suspend fun updateTag(vararg task: TagEntity)
+
+    @Delete
+    suspend fun deleteTag(vararg task: TagEntity)
 }

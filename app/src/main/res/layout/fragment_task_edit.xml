@@ -36,6 +36,25 @@
         android:scrollbars="none">
 
         <com.google.android.material.chip.ChipGroup
+            android:id="@+id/tag_chips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="false"
+            app:singleLine="true"
+            app:singleSelection="false" />
+    </HorizontalScrollView>
+
+    <HorizontalScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:fadingEdge="horizontal"
+        android:fadingEdgeLength="10dp"
+        android:requiresFadingEdge="horizontal"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
             android:id="@+id/due_date_chips"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

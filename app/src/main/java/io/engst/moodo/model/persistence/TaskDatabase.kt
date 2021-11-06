@@ -25,10 +25,11 @@ import java.time.format.DateTimeFormatter
 const val LOG_TAG = "TaskDatabase"
 
 @Database(
-    version = 4,
+    version = 5,
     entities = [
         TaskEntity::class,
-        TaskListOrderEntity::class
+        TaskListOrderEntity::class,
+        TagEntity::class
     ]
 )
 @TypeConverters(TaskConverter::class)
@@ -73,17 +74,34 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
 
+        private val dbMigration4to5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // create new table
+                db.execSQL("CREATE TABLE IF NOT EXISTS `tag` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT NOT NULL, `color` TEXT NOT NULL)")
+
+                // add some tags
+                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(0, 'Moodo', '#80cbc4')")
+                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
+                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
+
+                // add new column to tasks
+                db.execSQL("ALTER TABLE `task` ADD COLUMN tag TEXT")
+            }
+        }
+
         fun getInstance(context: Context): TaskDatabase {
             if (database == null) {
                 synchronized(TaskDatabase::class.java) {
-                    database = Room.databaseBuilder(
-                        context.applicationContext,
-                        TaskDatabase::class.java,
-                        "moodoDb"
-                    )
+                    database = Room
+                        .databaseBuilder(
+                            context.applicationContext,
+                            TaskDatabase::class.java,
+                            "moodoDb"
+                        )
                         .addMigrations(dbMigration1to2)
                         .addMigrations(dbMigration2to3)
                         .addMigrations(dbMigration3to4)
+                        .addMigrations(dbMigration4to5)
                         .build()
                 }
             }

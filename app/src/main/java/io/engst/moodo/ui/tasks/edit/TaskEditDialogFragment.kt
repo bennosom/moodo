@@ -1,6 +1,8 @@
 package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
 import android.view.*
@@ -22,6 +24,8 @@ import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
 import io.engst.moodo.model.types.DateSuggestion
+import io.engst.moodo.model.types.Tag
+import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger
@@ -156,6 +160,52 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                 viewModel.saveTask()
                 dismiss()
             }
+        }
+    }
+
+    private fun updateTagChips(tags: List<Tag>) {
+        binding.root.findViewById<ChipGroup>(R.id.tag_chips).run {
+            removeAllViews()
+            tags.forEach { tag ->
+                val chip =
+                    layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
+                addView(chip.apply {
+                    id = View.generateViewId()
+                    text = tag.name
+                    chipBackgroundColor = ColorStateList.valueOf(tag.color)
+                    setOnClickListener {
+
+                    }
+                })
+            }
+            val chip =
+                layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
+            addView(chip.apply {
+                id = View.generateViewId()
+                text = "Other"
+                setOnClickListener {
+                    fun showDialog() {
+                        val fragmentManager = requireActivity().supportFragmentManager
+                        val newFragment = CustomDialogFragment()
+                        if (false /*isLargeDisplay*/) {
+                            // The device is using a large layout, so show the fragment as a dialog
+                            newFragment.show(fragmentManager, "dialog")
+                        } else {
+                            // The device is smaller, so show the fragment fullscreen
+                            val transaction = fragmentManager.beginTransaction()
+                            // For a little polish, specify a transition animation
+                            transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            // To make it fullscreen, use the 'content' root view as the container
+                            // for the fragment, which is always the root view for the activity
+                            transaction
+                                .add(android.R.id.content, newFragment)
+                                .addToBackStack(null)
+                                .commit()
+                        }
+                    }
+                    showDialog()
+                }
+            })
         }
     }
 

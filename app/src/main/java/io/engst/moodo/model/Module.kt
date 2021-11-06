@@ -10,4 +10,5 @@ val moduleModel = module {
     single { TaskFactory(get()) }
     single { TaskRepository(get(), get(), get(), get()) }
     single { TaskNotifications(getLogger<TaskNotifications>("notification"), get(), get()) }
+    single { TagFactory() }
 }

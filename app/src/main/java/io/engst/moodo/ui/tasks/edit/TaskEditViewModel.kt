@@ -2,8 +2,11 @@ package io.engst.moodo.ui.tasks.edit
 
 import android.os.VibrationEffect
 import android.os.Vibrator
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.model.types.Tag
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
@@ -23,6 +26,8 @@ class TaskEditViewModel(
 ) : ViewModel() {
 
     private val logger: Logger by injectLogger("viewmodel")
+
+    val tags: LiveData<List<Tag>> = repository.tags.asLiveData()
 
     var originalTask: Task? = null
         set(value) {
@@ -134,9 +139,14 @@ class TaskEditViewModel(
                     it.dueDate != buildDueDate()
         } ?: true
 
-
     private fun buildDueDate(): LocalDateTime? =
         dueDate?.let {
             LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
         }
+
+    fun addTag(name: String, color: Int) {
+        GlobalScope.launch {
+            repository.addTag(name, color)
+        }
+    }
 }
