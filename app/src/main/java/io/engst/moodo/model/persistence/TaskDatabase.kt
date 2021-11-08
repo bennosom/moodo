@@ -68,17 +68,17 @@ abstract class TaskDatabase : RoomDatabase() {
             }
 
             val dbName = database!!.openHelper.databaseName
+            val dbSchemaVersion = database!!.openHelper.readableDatabase.version.toString()
             val backupPath = context.filesDir
-            //val backupPath = context.getExternalFilesDir("backup")
             val databaseFile = context.getDatabasePath(dbName)
 
             Log.d(LOG_TAG, "Backup database $dbName at $databaseFile")
 
             database!!.close()
 
-            val fileName = "$dbName-${
+            val fileName = "$dbName-v$dbSchemaVersion-${
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
-            }.sqlite3"
+            }.db"
 
             databaseFile.copyTo(File("$backupPath/$fileName"))
 
@@ -128,12 +128,12 @@ abstract class TaskDatabase : RoomDatabase() {
             val databaseFile = context.getDatabasePath(dbName)
             database!!.close()
 
-            if (file.extension == "sqlite3") {
+            if (file.extension == "sqlite3" || file.extension == "db") {
                 file.copyTo(databaseFile, overwrite = true)
                 Log.d(LOG_TAG, "Restored database from $file")
                 restartApp(context)
             } else {
-                Log.e(LOG_TAG, "File is no SQLite database: $file")
+                Log.e(LOG_TAG, "Invalid database file: $file")
             }
         }
 
