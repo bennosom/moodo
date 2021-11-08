@@ -97,7 +97,10 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                 setOnClickListener {
                     viewModel.addNewTask()
                     viewModel.description = ""
+                    viewModel.dueDate = null
+                    viewModel.dueTime = null
                     binding.descriptionText.editText?.setText(viewModel.description)
+                    updateDateChips()
                     context.getSystemService<Vibrator>()
                         ?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
                 }
