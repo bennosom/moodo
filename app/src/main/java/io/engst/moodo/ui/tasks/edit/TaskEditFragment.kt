@@ -1,6 +1,5 @@
 package io.engst.moodo.ui.tasks.edit
 
-import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -13,9 +12,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
-import androidx.fragment.app.DialogFragment
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -45,15 +41,8 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.DialogStyle)
 
         viewModel.originalTask = task
-    }
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val bottomSheetDialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        bottomSheetDialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        return bottomSheetDialog
     }
 
     override fun onCreateView(
@@ -90,7 +79,6 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             )
         }
     }
-
 
     private fun initActions() {
         if (viewModel.originalTask == null) {
