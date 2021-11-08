@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">Moodo</string>
+
+    <string name="action_settings">Einstellungen</string>
+    <string name="action_backup">Datenbank sichern</string>
+    <string name="action_description_backup">Datenbank sichern</string>
+    <string name="action_restore">Datenbank wiederherstellen</string>
+    <string name="action_description_restore">Datenbank wiederherstellen</string>
+    <string name="action_info">Info</string>
+    <string name="action_description_about">Über Moodo</string>
+
+    <string name="dialog_restore_database">Datei zur Wiederherstellung:</string>
+    <string name="dialog_backup_success">Sicherung erfolgreich</string>
+    <string name="dialog_backup_not_available">Keine Sicherungen gefunden</string>
+
+    <string name="shift_by_nothing">Heute</string>
+    <string name="shift_by_one_day">1 Tag</string>
+    <string name="shift_by_two_days">2 Tage</string>
+    <string name="shift_by_one_week">1 Woche</string>
+    <string name="shift_by_one_month">1 Monat</string>
+
+    <string name="now">Jetzt</string>
+    <string name="today">Heute</string>
+    <string name="tomorrow">Morgen</string>
+    <string name="monday">Montag</string>
+    <string name="tuesday">Dienstag</string>
+    <string name="wednesday">Mittwoch</string>
+    <string name="thursday">Donnerstag</string>
+    <string name="friday">Freitag</string>
+    <string name="saturday">Samstag</string>
+    <string name="sunday">Sonntag</string>
+    <string name="next_week">Nächste Woche</string>
+    <string name="later">Später</string>
+
+    <string name="task_input_description">Aufgabe</string>
+    <string name="task_button_delete">Löschen</string>
+    <string name="task_button_cancel">Abbrechen</string>
+    <string name="task_button_add">Hinzufügen</string>
+    <string name="task_done_at">Erledigt am %1$s</string>
+
+    <string name="due_date_picker_title">Fällig zum</string>
+    <string name="due_date_custom">Andere</string>
+    <string name="due_time_suggestion_morning">9:00</string>
+    <string name="due_time_suggestion_midday">12:00</string>
+    <string name="due_time_suggestion_afternoon">15:00</string>
+    <string name="due_time_suggestion_evening">18:00</string>
+    <string name="due_time_custom">Andere</string>
+
+    <string name="notification_channel_name">Aufgaben Erinnerung</string>
+    <string name="notification_group_name">Aufgaben Erinnerungen</string>
+    <string name="notification_channel_description">Benachrichtigungskanal für Aufgaben</string>
+    <string name="notification_action_task_done">Erledigt</string>
+    <string name="notification_action_task_shift">Später</string>
+    <string name="task_button_save">Speichern</string>
+    <string name="task_button_done">Erledigt</string>
+</resources>
