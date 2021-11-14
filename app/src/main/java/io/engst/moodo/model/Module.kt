@@ -9,8 +9,8 @@ const val TAG = "model"
 
 val moduleModel = module {
     single { TaskDatabase.getInstance(get()).taskDao }
-    single { ReminderScheduler(get { parametersOf(TAG, logPrefix<ReminderScheduler>()) }, get()) }
+    single { TaskScheduler(get { parametersOf(TAG, logPrefix<TaskScheduler>()) }, get()) }
     single { TaskFactory(get()) }
-    single { TaskRepository(get(), get(), get()) }
-    single { NotificationHelper(get { parametersOf(TAG, logPrefix<NotificationHelper>()) }, get()) }
+    single { TaskRepository(get(), get()) }
+    single { TaskNotifications(get { parametersOf(TAG, logPrefix<TaskNotifications>()) }, get(), get()) }
 }

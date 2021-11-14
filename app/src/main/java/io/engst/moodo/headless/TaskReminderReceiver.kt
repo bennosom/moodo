@@ -3,33 +3,29 @@ package io.engst.moodo.headless
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.engst.moodo.model.NotificationHelper
-import io.engst.moodo.model.types.extraTaskDescription
-import io.engst.moodo.model.types.extraTaskDueDate
-import io.engst.moodo.model.types.extraTaskId
+import io.engst.moodo.model.TaskNotifications
+import io.engst.moodo.model.TaskScheduler
 import io.engst.moodo.shared.Logger
-import io.engst.moodo.shared.extraAsString
 import io.engst.moodo.shared.inject
 import io.engst.moodo.shared.injectLogger
 
 class TaskReminderReceiver : BroadcastReceiver() {
 
     private val logger: Logger by injectLogger("headless")
-    private val helper: NotificationHelper by inject()
+    private val taskScheduler: TaskScheduler by inject()
+    private val notifications: TaskNotifications by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        logger.debug { "onReceive $intent with extras ${intent.extraAsString}" }
+        logger.debug { "onReceive $intent" }
 
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED -> {
-                // TODO: set reminders because device restarted!?
+                // update reminder because device restarted and former reminder got lost
+                taskScheduler.updateReminder()
             }
             else -> {
-                val id = intent.getLongExtra(extraTaskId, -1L)
-                val dueDate = intent.getLongExtra(extraTaskDueDate, 0L)
-                val description = intent.getStringExtra(extraTaskDescription) ?: "empty"
-
-                helper.showNotification(id, dueDate, description)
+                // update notifications because alarm fired
+                notifications.updateNotifications()
             }
         }
     }

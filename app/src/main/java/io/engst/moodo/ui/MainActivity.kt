@@ -7,21 +7,26 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
 import io.engst.moodo.R
 import io.engst.moodo.model.TaskRepository
+import io.engst.moodo.model.TaskScheduler
 import io.engst.moodo.model.persistence.TaskDatabase
 import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.inject
+import io.engst.moodo.shared.koinGet
 import io.engst.moodo.ui.tasks.TaskListViewModel
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
 
-    private val repository: TaskRepository by inject()
     private val viewModel: TaskListViewModel by viewModel()
+    private val repository: TaskRepository by inject()
+    private val taskScheduler: TaskScheduler by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        taskScheduler.updateReminder()
 
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.topAppBar).apply {
             setNavigationOnClickListener {

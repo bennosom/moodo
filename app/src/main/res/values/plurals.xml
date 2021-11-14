@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="since_x_hours">
-        <item quantity="one">since %d hour</item>
-        <item quantity="other">since %d hours</item>
+        <item quantity="one">due since %d hour</item>
+        <item quantity="other">due since %d hours</item>
     </plurals>
     <plurals name="since_x_days">
-        <item quantity="one">since %d day</item>
-        <item quantity="other">since %d days</item>
+        <item quantity="one">due since %d day</item>
+        <item quantity="other">due since %d days</item>
     </plurals>
     <plurals name="since_x_weeks">
-        <item quantity="one">since %d week</item>
-        <item quantity="other">since %d weeks</item>
+        <item quantity="one">due since %d week</item>
+        <item quantity="other">due since %d weeks</item>
     </plurals>
     <plurals name="since_x_months">
-        <item quantity="one">since %d month</item>
-        <item quantity="other">since %d months</item>
+        <item quantity="one">due since %d month</item>
+        <item quantity="other">due since %d months</item>
     </plurals>
     <plurals name="since_x_years">
-        <item quantity="one">since %d year</item>
-        <item quantity="other">since %d years</item>
+        <item quantity="one">due since %d year</item>
+        <item quantity="other">due since %d years</item>
+    </plurals>
+    <plurals name="x_tasks_due">
+        <item quantity="one">You have %d task due</item>
+        <item quantity="other">You have %d tasks due</item>
     </plurals>
 </resources>

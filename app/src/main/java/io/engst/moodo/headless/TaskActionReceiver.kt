@@ -28,6 +28,9 @@ class TaskActionReceiver : BroadcastReceiver() {
                     logger.error { "Invalid task id" }
                 }
             }
+            else -> {
+                logger.error { "unknown action" }
+            }
         }
     }
 }

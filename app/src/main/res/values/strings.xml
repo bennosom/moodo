@@ -50,7 +50,7 @@
     <string name="notification_group_name">Task reminder group</string>
     <string name="notification_channel_description">Notification channel to remind your tasks</string>
     <string name="notification_action_task_done">Done</string>
-    <string name="notification_action_task_shift">Snooze</string>
+    <string name="notification_action_task_snooze">Snooze</string>
     <string name="task_button_save">Save</string>
     <string name="task_button_done">Done</string>
 </resources>

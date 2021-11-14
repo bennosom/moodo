@@ -13,7 +13,6 @@ import java.time.LocalDateTime
 
 class TaskRepository(
     private val taskDao: TaskDao,
-    private val scheduler: ReminderScheduler,
     private val taskFactory: TaskFactory
 ) {
     private val logger: Logger by injectLogger("model")
@@ -32,8 +31,7 @@ class TaskRepository(
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
             logger.debug { "add $task" }
-            val effectiveId = taskDao.addTask(TaskEntity.from(task))
-            scheduler.updateReminder(task.copy(id = effectiveId))
+            taskDao.addTask(TaskEntity.from(task))
         }
     }
 
@@ -41,7 +39,6 @@ class TaskRepository(
         withContext(Dispatchers.IO) {
             logger.debug { "update $task" }
             taskDao.updateTask(TaskEntity.from(task))
-            scheduler.updateReminder(task)
         }
     }
 
@@ -49,7 +46,6 @@ class TaskRepository(
         withContext(Dispatchers.IO) {
             logger.debug { "delete $task" }
             taskDao.deleteTask(TaskEntity.from(task))
-            scheduler.clearReminder(task)
         }
     }
 

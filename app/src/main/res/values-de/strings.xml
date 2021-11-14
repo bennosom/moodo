@@ -50,7 +50,7 @@
     <string name="notification_group_name">Aufgaben Erinnerungen</string>
     <string name="notification_channel_description">Benachrichtigungskanal für Aufgaben</string>
     <string name="notification_action_task_done">Erledigt</string>
-    <string name="notification_action_task_shift">Später</string>
+    <string name="notification_action_task_snooze">Später</string>
     <string name="task_button_save">Speichern</string>
     <string name="task_button_done">Erledigt</string>
 </resources>

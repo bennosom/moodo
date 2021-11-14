@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="since_x_hours">
+        <item quantity="one">seit %d Stunde fällig</item>
+        <item quantity="other">seit %d Stunden fällig</item>
+    </plurals>
+    <plurals name="since_x_days">
+        <item quantity="one">seit %d Tag fällig</item>
+        <item quantity="other">seit %d Tage fällig</item>
+    </plurals>
+    <plurals name="since_x_weeks">
+        <item quantity="one">seit %d Woche fällig</item>
+        <item quantity="other">seit %d Wochen fällig</item>
+    </plurals>
+    <plurals name="since_x_months">
+        <item quantity="one">seit %d Monat fällig</item>
+        <item quantity="other">seit %d Monate fällig</item>
+    </plurals>
+    <plurals name="since_x_years">
+        <item quantity="one">seit %d Jahr fällig</item>
+        <item quantity="other">seit %d Jahren fällig</item>
+    </plurals>
+    <plurals name="x_tasks_due">
+        <item quantity="one">Du hast %d Aufgabe zu erledigen</item>
+        <item quantity="other">Du hast %d Aufgaben zu erledigen</item>
+    </plurals>
+</resources>
