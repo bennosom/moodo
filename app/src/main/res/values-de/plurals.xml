@@ -6,7 +6,7 @@
     </plurals>
     <plurals name="since_x_days">
         <item quantity="one">seit %d Tag fällig</item>
-        <item quantity="other">seit %d Tage fällig</item>
+        <item quantity="other">seit %d Tagen fällig</item>
     </plurals>
     <plurals name="since_x_weeks">
         <item quantity="one">seit %d Woche fällig</item>
@@ -14,7 +14,7 @@
     </plurals>
     <plurals name="since_x_months">
         <item quantity="one">seit %d Monat fällig</item>
-        <item quantity="other">seit %d Monate fällig</item>
+        <item quantity="other">seit %d Monaten fällig</item>
     </plurals>
     <plurals name="since_x_years">
         <item quantity="one">seit %d Jahr fällig</item>
