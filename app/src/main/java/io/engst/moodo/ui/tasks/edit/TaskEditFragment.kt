@@ -15,6 +15,8 @@ import androidx.core.widget.doOnTextChanged
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
@@ -25,13 +27,11 @@ import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.ui.prettyFormat
+import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
+import java.time.*
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
 
@@ -124,6 +124,8 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun updateDateChips() {
+        val helper = TaskListGroupHelper(LocalDateTime.now(viewModel.clock), viewModel.locale)
+
         binding.root.findViewById<ChipGroup>(R.id.due_date_chips).run {
             removeAllViews()
 
@@ -164,6 +166,8 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                         setOnClickListener { showTimePicker(viewModel.dueTime ?: LocalTime.now()) }
                     })
                 } ?: Unit.let {
+                    val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+
                     TimeSuggestion.values().forEach { suggestion ->
                         val timeChip = layoutInflater.inflate(
                             R.layout.task_edit_duedate_suggestion_chip,
@@ -172,7 +176,10 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                         ) as Chip
                         addView(timeChip.apply {
                             id = suggestion.ordinal
-                            text = getString(suggestion.textId)
+                            text = when (suggestion) {
+                                TimeSuggestion.Custom -> getString(R.string.due_time_custom)
+                                else -> formatter.format(getSuggestedTime(suggestion))
+                            }
                             isCloseIconVisible = false
                             isSelected = suggestion == TimeSuggestion.Morning
                             isCheckable = false
@@ -208,7 +215,15 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
                             }
                         } else {
                             setOnClickListener {
-                                viewModel.dueDate = getSuggestedDate(suggestion)
+                                viewModel.dueDate = getSuggestedDate(suggestion, helper)
+
+                                // don't ask for time for dates not being today or tomorrow
+                                if (viewModel.dueDate == helper.startOfNextWeek
+                                    || viewModel.dueDate == helper.later
+                                ) {
+                                    viewModel.dueTime = getSuggestedTime(TimeSuggestion.Morning)
+                                }
+
                                 updateDateChips()
                             }
                         }
@@ -218,13 +233,15 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
         }
     }
 
-    private fun getSuggestedDate(suggestion: DateSuggestion): LocalDate {
-        val now = LocalDate.now()
+    private fun getSuggestedDate(
+        suggestion: DateSuggestion,
+        helper: TaskListGroupHelper
+    ): LocalDate {
         return when (suggestion) {
-            DateSuggestion.Today -> now
-            DateSuggestion.Tomorrow -> now.plusDays(1)
-            DateSuggestion.NextWeek -> now.plusWeeks(1).with(DayOfWeek.MONDAY)
-            DateSuggestion.Later -> now.plusDays(2).with(DayOfWeek.MONDAY)
+            DateSuggestion.Today -> helper.today
+            DateSuggestion.Tomorrow -> helper.tomorrow
+            DateSuggestion.NextWeek -> helper.startOfNextWeek
+            DateSuggestion.Later -> helper.later
             else -> throw IllegalArgumentException("invalid date")
         }
     }
@@ -240,14 +257,17 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
     }
 
     private fun showDatePicker(dueDate: LocalDate) {
-        val millis = LocalDateTime.of(
-            dueDate,
-            LocalTime.of(0, 0)
-        ).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val picker = MaterialDatePicker.Builder
-            .datePicker()
+        val millis = LocalDateTime.of(dueDate, LocalTime.of(0, 0))
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
             .setSelection(millis)
             .setTitleText(R.string.due_date_picker_title)
+            .setCalendarConstraints(
+                CalendarConstraints.Builder()
+                    .setValidator(DateValidatorPointForward.now())
+                    .build()
+            )
             .build()
         picker.addOnPositiveButtonClickListener { selection ->
             viewModel.dueDate =
@@ -271,6 +291,7 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             if (is24HourFormat(context)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H
         val picker = MaterialTimePicker.Builder()
             .setTimeFormat(clockFormat)
+            .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
             .setHour(dueTime.hour)
             .setMinute(dueTime.minute)
             .setTitleText(R.string.due_date_picker_title)

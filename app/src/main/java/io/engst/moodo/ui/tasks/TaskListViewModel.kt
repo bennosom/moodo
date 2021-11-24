@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDateTime
-import java.util.Locale
+import java.util.*
 
 class TaskListViewModel(
     private val context: Context,
@@ -122,6 +122,7 @@ class TaskListViewModel(
             when (it) {
                 is TaskListItem -> it.task.dueDate
                 is GroupListItem -> it.date
+                else -> throw IllegalStateException("unknown list item")
             }
         }
 

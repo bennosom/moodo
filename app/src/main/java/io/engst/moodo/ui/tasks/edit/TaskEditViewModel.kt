@@ -7,11 +7,17 @@ import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.*
 
-class TaskEditViewModel(private val taskRepository: TaskRepository) : ViewModel() {
+class TaskEditViewModel(
+    private val taskRepository: TaskRepository,
+    val clock: Clock,
+    val locale: Locale
+) : ViewModel() {
 
     private val logger: Logger by injectLogger("viewmodel")
 

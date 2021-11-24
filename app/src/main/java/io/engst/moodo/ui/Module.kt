@@ -8,14 +8,6 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val moduleUi = module {
-    viewModel {
-        TaskListViewModel(
-            androidContext(),
-            Dispatchers.Default,
-            get(),
-            get(),
-            get()
-        )
-    }
-    viewModel { TaskEditViewModel(get()) }
+    viewModel { TaskListViewModel(androidContext(), Dispatchers.Default, get(), get(), get()) }
+    viewModel { TaskEditViewModel(get(), get(), get()) }
 }

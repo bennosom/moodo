@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 val LocalDate.prettyFormat: String
-    get() = format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+    get() = format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
 
 val LocalTime.prettyFormat: String
     get() = format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))

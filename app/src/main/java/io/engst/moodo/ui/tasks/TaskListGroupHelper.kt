@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
-import java.util.Locale
+import java.util.*
 
 enum class Group {
     Today,
@@ -27,21 +27,21 @@ enum class Group {
 }
 
 class TaskListGroupHelper(
-    private val now: LocalDateTime,
+    val now: LocalDateTime,
     locale: Locale
 ) {
     // relative dates
-    private val today: LocalDate = now.toLocalDate()
+    val today: LocalDate = now.toLocalDate()
     private val dayBeforeYesterday: LocalDate = today.minusDays(2)
     private val yesterday: LocalDate = today.minusDays(1)
-    private val tomorrow: LocalDate = today.plusDays(1)
+    val tomorrow: LocalDate = today.plusDays(1)
     private val startOfYear: LocalDate = today.with(TemporalAdjusters.firstDayOfYear())
     private val startOfWeek: LocalDate = today.with(WeekFields.of(locale).dayOfWeek(), 1)
     private val endOfLastWeek: LocalDate = startOfWeek.minusDays(1)
     private val endOfWeek: LocalDate = startOfWeek.plusDays(6)
-    private val startOfNextWeek: LocalDate = startOfWeek.plusDays(7)
+    val startOfNextWeek: LocalDate = startOfWeek.plusDays(7)
     private val endOfNextWeek: LocalDate = startOfNextWeek.plusDays(6)
-    private val later: LocalDate = startOfNextWeek.plusDays(7)
+    val later: LocalDate = startOfNextWeek.plusDays(7)
     private val endOfYear: LocalDate = today.with(TemporalAdjusters.lastDayOfYear())
 
     // week days
