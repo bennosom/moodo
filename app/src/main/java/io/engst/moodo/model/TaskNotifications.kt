@@ -113,6 +113,7 @@ class TaskNotifications(
                 .setExtras(Bundle().apply {
                     putInt(ReminderHashKey, it.hashCode())
                 })
+                .setOnlyAlertOnce(true)
                 .build()
 
             it to notification
@@ -155,7 +156,7 @@ class TaskNotifications(
                     logger.debug { "$id unchanged" }
                 }
             }
-            notify(0, notificationSummary)
+            //notify(0, notificationSummary)
         }
     }
 
