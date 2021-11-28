@@ -114,7 +114,6 @@ class TaskListFragment : Fragment() {
     }
 
     private fun showTaskEditPopup(task: Task? = null) {
-        val sheet = TaskEditFragment(task)
-        sheet.show(requireActivity().supportFragmentManager, "taskEdit")
+        TaskEditFragment.show(requireActivity().supportFragmentManager, task)
     }
 }

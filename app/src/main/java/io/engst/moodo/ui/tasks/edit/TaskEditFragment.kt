@@ -5,13 +5,12 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.format.DateFormat.is24HourFormat
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -26,6 +25,8 @@ import io.engst.moodo.model.types.DateSuggestion
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
+import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.prettyFormat
 import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -33,11 +34,38 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
+inline fun View.afterMeasured(crossinline block: () -> Unit) {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+            if (measuredWidth > 0 && measuredHeight > 0) {
+                viewTreeObserver.removeOnGlobalLayoutListener(this)
+                block()
+            }
+        }
+    })
+}
 
-    private val viewModel: TaskEditViewModel by viewModel()
+class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
 
+    private val logger: Logger by injectLogger(TaskEditFragment::class.simpleName)
     private lateinit var binding: FragmentTaskEditBinding
+    private val viewModel: TaskEditViewModel by viewModel()
+    private var task: Task? = null
+
+    companion object {
+        private var instance: TaskEditFragment? = null
+
+        fun show(fragmentManager: FragmentManager, task: Task?) {
+            instance?.let {
+                it.dismiss()
+                instance = null
+            }
+            instance = TaskEditFragment().apply {
+                this.task = task
+                show(fragmentManager, TaskEditFragment::class.simpleName)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,12 +99,29 @@ class TaskEditFragment(val task: Task?) : BottomSheetDialogFragment() {
             viewModel.description = text.toString()
         }
         binding.descriptionText.editText?.requestFocus()
+        binding.descriptionText.editText?.setOnTouchListener { v, event ->
+            if (v.hasFocus()) {
+                v.parent.requestDisallowInterceptTouchEvent(true)
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_SCROLL -> {
+                        v.parent.requestDisallowInterceptTouchEvent(false)
+                        true
+                    }
+                }
+            }
+            false
+        }
 
         requireContext().getSystemService(InputMethodManager::class.java)?.run {
             showSoftInput(
                 binding.descriptionText.editText,
                 InputMethodManager.SHOW_IMPLICIT
             )
+        }
+
+        logger.debug { "bexx1 ${view.height} ${view.measuredHeight}" }
+        requireActivity().findViewById<View>(android.R.id.content).rootView.afterMeasured {
+            logger.debug { "bexx2 ${view.height} ${view.measuredHeight}" }
         }
     }
 

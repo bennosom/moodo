@@ -11,7 +11,6 @@ import io.engst.moodo.model.TaskScheduler
 import io.engst.moodo.model.persistence.TaskDatabase
 import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.inject
-import io.engst.moodo.shared.koinGet
 import io.engst.moodo.ui.tasks.TaskListViewModel
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -55,8 +54,7 @@ class MainActivity : AppCompatActivity() {
             intent.extras?.getLong(extraTaskId)?.let { taskId ->
                 lifecycle.coroutineScope.launchWhenCreated {
                     val task = repository.getTask(taskId)
-                    val sheet = TaskEditFragment(task)
-                    sheet.show(supportFragmentManager, "taskEdit")
+                    TaskEditFragment.show(supportFragmentManager, task)
                 }
             }
         }
