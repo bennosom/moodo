@@ -21,6 +21,15 @@ class MainActivity : AppCompatActivity() {
     private val repository: TaskRepository by inject()
     private val taskScheduler: TaskScheduler by inject()
 
+    private val dbExportLauncher =
+        registerForActivityResult(CreateFileResultContract()) { fileUri ->
+            fileUri?.let { TaskDatabase.export(this, it) }
+        }
+    private val dbImportLauncher =
+        registerForActivityResult(SelectFileResultContract()) { fileUri ->
+            fileUri?.let { TaskDatabase.import(this, it) }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -34,11 +43,17 @@ class MainActivity : AppCompatActivity() {
             setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.backup -> {
-                        TaskDatabase.backup(applicationContext)
+                        dbExportLauncher.launch(
+                            CreateFileParams(
+                                suggestedName = TaskDatabase.getSuggestedExportName(),
+                            )
+                        )
                         true
                     }
                     R.id.restore -> {
-                        TaskDatabase.showRestoreDialog(context)
+                        dbImportLauncher.launch(
+                            SelectFileParams()
+                        )
                         true
                     }
                     R.id.about -> {

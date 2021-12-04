@@ -3,19 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/tasklistFragment">
+    app:startDestination="@id/taskListFragment">
     <fragment
-        android:id="@+id/tasklistFragment"
+        android:id="@+id/taskListFragment"
         android:name="io.engst.moodo.ui.tasks.TaskListFragment"
-        android:label="TaskListFragment"
+        android:label="Task list"
         tools:layout="@layout/fragment_task_list">
         <action
             android:id="@+id/action_taskListFragment_to_taskEditFragment"
-            app:destination="@+id/taskFragment" />
+            app:destination="@id/taskEditFragment" />
     </fragment>
     <fragment
         android:id="@+id/taskEditFragment"
         android:name="io.engst.moodo.ui.tasks.edit.TaskEditFragment"
-        android:label="TaskEditFragment"
+        android:label="Edit task"
         tools:layout="@layout/fragment_task_edit" />
 </navigation>
