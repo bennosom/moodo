@@ -2,9 +2,12 @@ package io.engst.moodo.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+import android.view.LayoutInflater
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import io.engst.moodo.BuildConfig
 import io.engst.moodo.R
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.TaskScheduler
@@ -57,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                         true
                     }
                     R.id.about -> {
-                        Toast.makeText(context, "Not implemented", Toast.LENGTH_SHORT).show()
+                        showAboutDialog()
                         true
                     }
                     else -> false
@@ -73,5 +76,23 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showAboutDialog() {
+        val customView = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_about, null, false).also {
+                it.findViewById<TextView>(R.id.app_version)?.apply {
+                    text = "Version ${BuildConfig.VERSION_NAME}"
+                }
+            }
+
+        MaterialAlertDialogBuilder(this)
+            .setView(customView)
+            .setTitle("About ${getString(R.string.app_name)}")
+            .setIcon(R.drawable.ic_launcher_foreground)
+            .setNeutralButton("Close") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }
