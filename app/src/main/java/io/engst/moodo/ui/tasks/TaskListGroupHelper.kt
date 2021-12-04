@@ -176,15 +176,15 @@ class TaskListGroupHelper(
                 dateTime?.let { scheduledDate ->
                     when (scheduledDate.toLocalDate()) {
                         in startOfYear..endOfLastWeek ->
-                            scheduledDate.format(DateTimeFormatter.ofPattern("d. MMM"))
+                            scheduledDate.format(DateTimeFormatter.ofPattern("d. MMMM"))
                         in startOfWeek..dayBeforeYesterday ->
-                            scheduledDate.format(DateTimeFormatter.ofPattern("EEE"))
-                        in yesterday..endOfWeek ->
+                            scheduledDate.format(DateTimeFormatter.ofPattern("EEEE"))
+                        in yesterday..endOfWeek, in tomorrow..tomorrow ->
                             scheduledDate.format(DateTimeFormatter.ofPattern("HH:mm"))
                         in startOfNextWeek..endOfNextWeek ->
-                            scheduledDate.format(DateTimeFormatter.ofPattern("EEE"))
+                            scheduledDate.format(DateTimeFormatter.ofPattern("EEEE"))
                         in later..endOfYear ->
-                            scheduledDate.format(DateTimeFormatter.ofPattern("d. MMM"))
+                            scheduledDate.format(DateTimeFormatter.ofPattern("d. MMMM"))
                         else ->
                             scheduledDate.format(DateTimeFormatter.ofPattern("d. MMM yyyy"))
                     }
