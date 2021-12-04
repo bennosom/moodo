@@ -1,5 +1,6 @@
 package io.engst.moodo.ui.tasks.edit
 
+import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -7,10 +8,13 @@ import android.os.Vibrator
 import android.text.format.DateFormat.is24HourFormat
 import android.view.*
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -33,6 +37,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+
 
 inline fun View.afterMeasured(crossinline block: () -> Unit) {
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -65,6 +70,18 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
                 show(fragmentManager, TaskEditFragment::class.simpleName)
             }
         }
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        dialog.setOnShowListener { dialog ->
+            (dialog as BottomSheetDialog).findViewById<FrameLayout>(
+                com.google.android.material.R.id.design_bottom_sheet
+            )?.let {
+                BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+        return dialog
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
