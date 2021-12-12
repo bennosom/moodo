@@ -1,7 +1,6 @@
 package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
-import android.graphics.Color
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -146,7 +145,7 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
         if (viewModel.originalTask == null) {
             binding.buttonDelete.apply {
                 text = getString(R.string.task_button_cancel)
-                setTextColor(Color.BLACK)
+                setTextColor(context.getColor(R.color.textOnSurface))
                 setOnClickListener {
                     dismiss()
                 }

@@ -32,7 +32,7 @@
     <string name="next_week">Next week</string>
     <string name="later">Later</string>
 
-    <string name="task_input_description">Do</string>
+    <string name="task_input_description">Task</string>
     <string name="task_button_delete">Delete</string>
     <string name="task_button_cancel">Cancel</string>
     <string name="task_button_add">Add</string>

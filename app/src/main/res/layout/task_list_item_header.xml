@@ -8,5 +8,5 @@
     android:textAlignment="center"
     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
     android:textAllCaps="true"
-    android:textColor="#666"
+    android:textColor="@color/text2Color"
     tools:text="Header" />

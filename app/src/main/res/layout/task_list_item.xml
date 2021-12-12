@@ -30,8 +30,8 @@
             android:layout_gravity="end"
             android:paddingHorizontal="8dp"
             android:paddingBottom="4dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-            android:textColor="@color/task_list_item_due_date"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+            android:textSize="12sp"
             tools:text="@tools:sample/lorem[3]" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

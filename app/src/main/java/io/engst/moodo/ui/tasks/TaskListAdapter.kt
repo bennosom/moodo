@@ -1,6 +1,5 @@
 package io.engst.moodo.ui.tasks
 
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.LayoutInflater
@@ -9,6 +8,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
 import io.engst.moodo.model.types.Task
@@ -54,21 +54,31 @@ class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
                 this.item = item
 
                 with(binding) {
-                    descriptionText.paintFlags = if (item.task.isDone) {
-                        descriptionText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                    } else {
-                        descriptionText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    with(descriptionText) {
+                        paintFlags = if (item.task.isDone) {
+                            paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                        } else {
+                            paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                        }
+                        typeface = if (item.task.isDue && !item.task.isDone) {
+                            Typeface.DEFAULT_BOLD
+                        } else {
+                            Typeface.DEFAULT
+                        }
+                        setTextColor(
+                            if (item.task.isDone) context.getColor(R.color.text2Color)
+                            else context.getColor(R.color.textOnSurface)
+                        )
+                        text = item.task.description
                     }
-                    descriptionText.typeface = if (item.task.isDue && !item.task.isDone) {
-                        Typeface.DEFAULT_BOLD
-                    } else {
-                        Typeface.DEFAULT
-                    }
-                    descriptionText.text = item.task.description
-                    descriptionText.setTextColor(if (item.task.isDone) Color.GRAY else Color.BLACK)
 
-                    dueDate.text = item.dateText
-                    dueDate.setTextColor(if (item.task.isDone) Color.GRAY else Color.BLACK)
+                    with(dueDate) {
+                        setTextColor(
+                            if (item.task.isDone) context.getColor(R.color.text2Color)
+                            else context.getColor(R.color.textOnSurface)
+                        )
+                        text = item.dateText
+                    }
 
                     root.setOnClickListener {
                         onClick(item.task)
