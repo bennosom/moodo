@@ -20,12 +20,19 @@ class TaskActionReceiver : BroadcastReceiver() {
         logger.debug { "onReceive $intent with extras ${intent.extraAsString}" }
 
         when (intent.action) {
+            TaskAction.ShiftOneDay.action -> {
+                intent.getLongExtra(extraTaskId, -1L).takeIf { it > 0 }?.let {
+                    repository.shift(it, TaskAction.ShiftOneDay)
+                }
+            }
+            TaskAction.ShiftOneWeek.action -> {
+                intent.getLongExtra(extraTaskId, -1L).takeIf { it > 0 }?.let {
+                    repository.shift(it, TaskAction.ShiftOneWeek)
+                }
+            }
             TaskAction.Done.action -> {
-                val taskId = intent.getLongExtra(extraTaskId, -1L)
-                if (taskId != -1L) {
-                    repository.setDone(taskId)
-                } else {
-                    logger.error { "Invalid task id" }
+                intent.getLongExtra(extraTaskId, -1L).takeIf { it > 0 }?.let {
+                    repository.setDone(it)
                 }
             }
             else -> {

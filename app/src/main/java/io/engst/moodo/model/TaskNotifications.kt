@@ -57,88 +57,91 @@ class TaskNotifications(
     private fun updateNotifications(tasks: List<Task>) {
         logger.debug { "updateNotifications tasks=$tasks" }
 
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        val notifications = tasks
+            .filter { it.isScheduled && it.isDue }
+            .map {
+                val taskId = it.id!!
+                val notificationId = (it.id % (Int.MAX_VALUE - 100)).toInt() + 100
 
-        val notifications = tasks.filter { it.isDue && it.isScheduled }.map {
-            val taskId = it.id!!
-            val notificationId = (it.id % (Int.MAX_VALUE - 100)).toInt() + 100
+                val actionEdit = PendingIntent.getActivity(
+                    context,
+                    notificationId,
+                    Intent(context, MainActivity::class.java).apply {
+                        putExtra(extraTaskId, taskId)
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
 
-            val donePendingIntent = PendingIntent.getBroadcast(
-                context,
-                notificationId,
-                Intent(context, TaskActionReceiver::class.java).apply {
-                    action = TaskAction.Done.action
-                    putExtra(extraTaskId, taskId)
-                },
-                0
-            )
+                val actionDone: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                    R.drawable.ic_done_24,
+                    context.getString(R.string.notification_action_task_done),
+                    PendingIntent.getBroadcast(
+                        context,
+                        notificationId,
+                        Intent(context, TaskActionReceiver::class.java).apply {
+                            action = TaskAction.Done.action
+                            putExtra(extraTaskId, taskId)
+                        },
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                ).build()
 
-            val snoozePendingIntent = PendingIntent.getActivity(
-                context,
-                notificationId,
-                Intent(context, MainActivity::class.java).apply {
-                    action = TaskAction.Snooze.action
-                    putExtra(extraTaskId, taskId)
-                },
-                0
-            )
+                val actionShiftOneDay: NotificationCompat.Action =
+                    NotificationCompat.Action.Builder(
+                        R.drawable.ic_more_time_24,
+                        context.getString(R.string.notification_action_task_shift_one_day),
+                        PendingIntent.getBroadcast(
+                            context,
+                            notificationId,
+                            Intent(context, TaskActionReceiver::class.java).apply {
+                                action = TaskAction.ShiftOneDay.action
+                                putExtra(extraTaskId, taskId)
+                            },
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                    ).build()
 
-            val actionDone: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                R.drawable.ic_done_24,
-                context.getString(R.string.notification_action_task_done),
-                donePendingIntent
-            ).build()
+                val actionShiftOneWeek: NotificationCompat.Action =
+                    NotificationCompat.Action.Builder(
+                        R.drawable.ic_more_time_24,
+                        context.getString(R.string.notification_action_task_shift_one_week),
+                        PendingIntent.getBroadcast(
+                            context,
+                            notificationId,
+                            Intent(context, TaskActionReceiver::class.java).apply {
+                                action = TaskAction.ShiftOneWeek.action
+                                putExtra(extraTaskId, taskId)
+                            },
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                    ).build()
 
-            val actionSnooze: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                R.drawable.ic_more_time_24,
-                context.getString(R.string.notification_action_task_snooze),
-                snoozePendingIntent
-            ).build()
+                val notification = NotificationCompat.Builder(context, ReminderChannelId)
+                    .setSmallIcon(R.drawable.ic_done_all_24)
+                    .setContentTitle(it.description)
+                    .setContentIntent(actionEdit)
+                    .addAction(actionShiftOneDay)
+                    .addAction(actionShiftOneWeek)
+                    .addAction(actionDone)
+                    .setWhen(it.dueDate!!.msecsSinceEpoch)
+                    .setShowWhen(true)
+                    .setAutoCancel(false)
+                    .setGroup(ReminderGroupId)
+                    .setExtras(Bundle().apply {
+                        putInt(ReminderHashKey, it.hashCode())
+                    })
+                    .setOnlyAlertOnce(true)
+                    .build()
 
-            val notification = NotificationCompat.Builder(context, ReminderChannelId)
-                .setSmallIcon(R.drawable.ic_done_all_24)
-                .setContentTitle(it.description)
-                .setContentIntent(pendingIntent)
-                .addAction(actionSnooze)
-                .addAction(actionDone)
-                .setWhen(it.dueDate!!.msecsSinceEpoch)
-                .setShowWhen(true)
-                .setAutoCancel(false)
-                .setGroup(ReminderGroupId)
-                .setExtras(Bundle().apply {
-                    putInt(ReminderHashKey, it.hashCode())
-                })
-                .setOnlyAlertOnce(true)
-                .build()
-
-            it to notification
-        }
-
-        val count = notifications.count()
-        val summaryTitle = context.resources.getQuantityString(R.plurals.x_tasks_due, count, count)
-
-        val notificationSummary = NotificationCompat.Builder(context, ReminderChannelId)
-            .setSmallIcon(R.drawable.ic_done_all_24)
-            .setContentIntent(pendingIntent)
-            .setContentTitle(summaryTitle)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setGroup(ReminderGroupId)
-            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
-            .setGroupSummary(true)
-            .build()
+                it to notification
+            }
 
         val notificationManager = context.getSystemService<NotificationManager>()!!
         val activeNotifications = notificationManager.activeNotifications.toList()
         val activeNotificationIds = activeNotifications.map { it.id }
 
         val nextNotifications = notifications.map { it.first.id!!.toInt() }
-        val orphanedNotifications = activeNotificationIds - nextNotifications
+        val orphanedNotifications = activeNotificationIds - nextNotifications.toSet()
 
         NotificationManagerCompat.from(context).apply {
             orphanedNotifications.forEach {
@@ -147,22 +150,19 @@ class TaskNotifications(
             notifications.forEach {
                 val id = it.first.id!!.toInt()
                 val hash = it.first.hashCode()
-                val activeHash = activeNotifications.find { it.id == id }?.notification?.extras?.getInt(
-                    ReminderHashKey)
+                val activeHash =
+                    activeNotifications.find { it.id == id }?.notification?.extras?.getInt(
+                        ReminderHashKey
+                    )
                 if (hash != activeHash) {
-                    logger.debug { "notify $id" }
+                    logger.debug { "notify task#$id" }
                     notify(id, it.second)
-                } else {
-                    logger.debug { "$id unchanged" }
                 }
             }
-            //notify(0, notificationSummary)
         }
     }
 
     private fun createNotificationChannel() {
-        logger.debug { "createNotificationChannel" }
-
         context.getSystemService<NotificationManager>()?.let { notificationManager ->
             val channel = NotificationChannel(
                 ReminderChannelId,

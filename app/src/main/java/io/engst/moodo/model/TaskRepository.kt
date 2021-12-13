@@ -3,17 +3,23 @@ package io.engst.moodo.model
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskEntity
 import io.engst.moodo.model.types.Task
+import io.engst.moodo.model.types.TaskAction
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import java.time.Clock
 import java.time.LocalDateTime
+import java.util.*
 
 class TaskRepository(
     private val taskDao: TaskDao,
-    private val taskFactory: TaskFactory
+    private val taskFactory: TaskFactory,
+    private val clock: Clock,
+    private val locale: Locale
 ) {
     private val logger: Logger by injectLogger("model")
 
@@ -46,6 +52,22 @@ class TaskRepository(
         withContext(Dispatchers.IO) {
             logger.debug { "delete $task" }
             taskDao.deleteTask(TaskEntity.from(task))
+        }
+    }
+
+    fun shift(taskId: Long, amount: TaskAction) {
+        GlobalScope.launch(Dispatchers.IO) {
+            logger.debug { "shift #$taskId by $amount" }
+
+            val helper = TaskListGroupHelper(LocalDateTime.now(clock), locale)
+            val shiftOffset = when (amount) {
+                TaskAction.ShiftOneDay -> helper.tomorrow.atTime(9, 0)
+                TaskAction.ShiftOneWeek -> helper.startOfNextWeek.atTime(9, 0)
+                else -> throw IllegalStateException("failed to shift task by $amount")
+            }
+
+            val task = taskDao.getTaskById(taskId)
+            taskDao.updateTask(task.copy(dueDate = shiftOffset))
         }
     }
 

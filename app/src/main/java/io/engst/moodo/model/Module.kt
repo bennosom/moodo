@@ -11,6 +11,12 @@ val moduleModel = module {
     single { TaskDatabase.getInstance(get()).taskDao }
     single { TaskScheduler(get { parametersOf(TAG, logPrefix<TaskScheduler>()) }, get()) }
     single { TaskFactory(get()) }
-    single { TaskRepository(get(), get()) }
-    single { TaskNotifications(get { parametersOf(TAG, logPrefix<TaskNotifications>()) }, get(), get()) }
+    single { TaskRepository(get(), get(), get(), get()) }
+    single {
+        TaskNotifications(
+            get { parametersOf(TAG, logPrefix<TaskNotifications>()) },
+            get(),
+            get()
+        )
+    }
 }

@@ -1,6 +1,5 @@
 package io.engst.moodo.ui
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.TextView
@@ -13,13 +12,17 @@ import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.TaskScheduler
 import io.engst.moodo.model.persistence.TaskDatabase
 import io.engst.moodo.model.types.extraTaskId
+import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.inject
+import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.tasks.TaskListViewModel
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
 
+
+    private val logger: Logger by injectLogger(MainActivity::class.simpleName)
     private val viewModel: TaskListViewModel by viewModel()
     private val repository: TaskRepository by inject()
     private val taskScheduler: TaskScheduler by inject()
@@ -41,25 +44,23 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.topAppBar).apply {
             setNavigationOnClickListener {
+                logger.debug { "clicked toolbar navigation button" }
                 viewModel.scrollToToday()
             }
             setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.backup -> {
-                        dbExportLauncher.launch(
-                            CreateFileParams(
-                                suggestedName = TaskDatabase.getSuggestedExportName(),
-                            )
-                        )
+                        logger.debug { "clicked toolbar menu export button" }
+                        dbExportLauncher.launch(CreateFileParams(suggestedName = TaskDatabase.getSuggestedExportName()))
                         true
                     }
                     R.id.restore -> {
-                        dbImportLauncher.launch(
-                            SelectFileParams()
-                        )
+                        logger.debug { "clicked toolbar menu import button" }
+                        dbImportLauncher.launch(SelectFileParams())
                         true
                     }
                     R.id.about -> {
+                        logger.debug { "clicked toolbar menu info button" }
                         showAboutDialog()
                         true
                     }
@@ -68,8 +69,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (intent.action == Intent.ACTION_VIEW) {
-            intent.extras?.getLong(extraTaskId)?.let { taskId ->
+        if (intent.hasExtra(extraTaskId)) {
+            intent.getLongExtra(extraTaskId, -1L).takeIf { it > -1 }?.let { taskId ->
+                logger.debug { "show task edit fragment for task#$taskId" }
                 lifecycle.coroutineScope.launchWhenCreated {
                     val task = repository.getTask(taskId)
                     TaskEditFragment.show(supportFragmentManager, task)

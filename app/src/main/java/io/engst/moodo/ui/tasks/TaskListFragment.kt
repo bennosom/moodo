@@ -46,7 +46,9 @@ class TaskListFragment : Fragment() {
 
         binding.taskAddButton.setOnClickListener {
             showTaskEditPopup()
-            // findNavController().navigate(R.id.action_taskListFragment_to_taskEditFragment) // crash: Navigation destination io.engst.moodo:id/taskFragment referenced from action io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/tasklistFragment)
+
+            // crashes: Navigation destination io.engst.moodo:id/taskFragment referenced from action io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/tasklistFragment)
+            // findNavController().navigate(R.id.action_taskListFragment_to_taskEditFragment)
         }
 
         val swipeHandler = object : SwipeTaskCallback(requireContext()) {
