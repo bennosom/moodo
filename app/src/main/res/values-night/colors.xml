@@ -4,6 +4,6 @@
     <color name="textOnSurface">#ffffff</color>
 
     <color name="statusBarBackground">#1a242e</color>
-    <color name="toolBarBackground">#1d2733</color>
+    <color name="toolBarBackground">#1F1D35</color>
     <color name="backgroundColor">#1d2733</color>
 </resources>

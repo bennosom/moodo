@@ -6,8 +6,8 @@
     <color name="surfaceColor">#fafafa</color>
     <color name="textOnSurface">#000000</color>
 
-    <color name="statusBarBackground">#dadada</color>
-    <color name="toolBarBackground">#eaeaea</color>
+    <color name="statusBarBackground">#E4E4E4</color>
+    <color name="toolBarBackground">#e8e8e8</color>
     <color name="backgroundColor">#fafafa</color>
 
     <color name="text2Color">#7d8b98</color>
