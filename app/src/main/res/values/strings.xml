@@ -54,4 +54,5 @@
     <string name="notification_action_task_shift_one_week">+1 week</string>
     <string name="task_button_save">Save</string>
     <string name="task_button_done">Done</string>
+    <string name="backlog">Backlog</string>
 </resources>

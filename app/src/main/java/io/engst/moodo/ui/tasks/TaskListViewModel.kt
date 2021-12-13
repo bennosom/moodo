@@ -3,6 +3,7 @@ package io.engst.moodo.ui.tasks
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.engst.moodo.R
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
@@ -85,11 +86,17 @@ class TaskListViewModel(
     private fun sortTasksWithHeader(tasks: List<Task>): List<ListItem> {
         val helper = TaskListGroupHelper(LocalDateTime.now(clock), locale)
         val groupItemToday = helper.getGroupItem(Group.Today)
+        val groupItemBacklog = GroupListItem(
+            id = "Backlog",
+            index = 0,
+            labelResId = R.string.backlog,
+            date = LocalDateTime.MAX
+        )
 
         val doneList = mutableListOf<TaskListItem>()
         val dueList = mutableListOf<TaskListItem>()
-        val unscheduledList = mutableListOf<TaskListItem>()
         val scheduledList = mutableListOf<TaskListItem>()
+        val backlogList = mutableListOf<TaskListItem>()
 
         tasks.forEach { task ->
             val item = TaskListItem(
@@ -106,7 +113,7 @@ class TaskListViewModel(
             when {
                 task.isDone -> doneList.add(item)
                 task.isScheduled -> if (task.isDue) dueList.add(item) else scheduledList.add(item)
-                else -> unscheduledList.add(item)
+                else -> backlogList.add(item)
             }
         }
 
@@ -125,7 +132,7 @@ class TaskListViewModel(
             }
         }
 
-        return sortedDoneList + groupItemToday + sortedDueList + unscheduledList + sortedScheduledList
+        return sortedDoneList + groupItemToday + sortedDueList + sortedScheduledList + groupItemBacklog + backlogList
     }
 
     fun scrollToToday() {
