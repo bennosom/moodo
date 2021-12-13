@@ -8,9 +8,8 @@ import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.*
 import java.time.Clock
 import java.time.LocalDateTime
 import java.util.*
@@ -23,7 +22,10 @@ class TaskRepository(
 ) {
     private val logger: Logger by injectLogger("model")
 
+    private val forceUpdateChannel = ConflatedBroadcastChannel<Unit>()
+
     val tasks: Flow<List<Task>> = taskDao.getTasks()
+        .combine(forceUpdateChannel.asFlow()) { tasks, _ -> tasks }
         .map { taskFactory.createTaskList(it) }
         .flowOn(Dispatchers.IO)
 
@@ -77,6 +79,11 @@ class TaskRepository(
             val task = taskDao.getTaskById(taskId)
             taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
         }
+    }
+
+
+    fun forceUpdateList() {
+        forceUpdateChannel.offer(Unit)
     }
 
     /**

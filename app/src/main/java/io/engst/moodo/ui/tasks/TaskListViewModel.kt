@@ -122,7 +122,6 @@ class TaskListViewModel(
             when (it) {
                 is TaskListItem -> it.task.dueDate
                 is GroupListItem -> it.date
-                else -> throw IllegalStateException("unknown list item")
             }
         }
 

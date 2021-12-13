@@ -80,6 +80,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            repository.forceUpdateList()
+        }
+    }
+
     private fun showAboutDialog() {
         val customView = LayoutInflater.from(this)
             .inflate(R.layout.dialog_about, null, false).also {
