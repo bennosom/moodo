@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import com.google.android.material.snackbar.Snackbar
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskListBinding
@@ -17,87 +17,103 @@ import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class TaskListFragment : Fragment() {
+
     private val logger: Logger by injectLogger("view")
 
     private val viewModel: TaskListViewModel by sharedViewModel()
+    lateinit var binding: FragmentTaskListBinding
+    lateinit var listAdapter: TaskListAdapter
 
-    private var taskListAdapter: TaskListAdapter? = null
+    private val clickListener = object : TaskItemClickListener {
+        override fun onClick(task: Task) {
+            showTaskEditPopup(task)
+        }
+    }
+
+    private val swipeListener = object : TaskItemSwipeListener {
+        override fun onDone(task: Task) {
+            logger.debug { "onDone #${task.id}" }
+            viewModel.done(task)
+        }
+
+        override fun onShift(task: Task, shiftBy: DateShift) {
+            logger.debug { "onShift #${task.id} shiftBy=$shiftBy" }
+            if (task.isDone) {
+                viewModel.undone(task)
+            } else {
+                viewModel.shift(task, shiftBy)
+            }
+        }
+
+        override fun onRemoved(task: Task) {
+            logger.debug { "onDelete #${task.id}" }
+            activity?.findViewById<View>(R.id.activity_root_layout)?.let { view ->
+                Snackbar
+                    .make(view, "Task deleted", Snackbar.LENGTH_LONG)
+                    .setAction("Undo") {
+                        viewModel.undoDelete(task)
+                    }
+                    .show()
+            }
+            viewModel.delete(task)
+        }
+    }
+
+    private val dragListener = object : TaskItemDragListener {
+        override fun canDrag(dragTask: Task): Boolean {
+            //logger.debug { "canDrag #${dragTask.id}" }
+            return true
+        }
+
+        override fun onDragStart(dragTask: Task) {
+            //logger.debug { "onDragStart #${dragTask.id}" }
+        }
+
+        override fun canDrop(dragTask: Task, dropTask: Task): Boolean {
+            //logger.debug { "canDrop #${dragTask.id}  <-> #${dropTask.id}" }
+            return true
+        }
+
+        override fun onDrop(dragTask: Task, dropTask: Task) {
+            //logger.debug { "onDrop #${dragTask.id} <-> #${dropTask.id}" }
+            viewModel.updateOrder(listAdapter.getCurrentItems()
+                .filterIsInstance<ListItem.TaskItem>()
+                .map { it.id.toLong() })
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentTaskListBinding.inflate(inflater, container, false)
+        binding = FragmentTaskListBinding.inflate(inflater, container, false)
 
-        taskListAdapter = TaskListAdapter {
-            showTaskEditPopup(it)
-        }
+        listAdapter = TaskListAdapter(clickListener, swipeListener, dragListener)
 
         binding.taskList.apply {
-            adapter = taskListAdapter
             layoutManager = LinearLayoutManager(requireContext())
             setHasFixedSize(true)
+            adapter = listAdapter
         }
 
         binding.taskAddButton.setOnClickListener {
+            logger.debug { "taskAddButton clicked" }
+
+            /*
+            findNavController().navigate(R.id.action_taskListFragment_to_taskEditFragment)
+            crashes with Navigation destination io.engst.moodo:id/taskFragment referenced from action io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/tasklistFragment)
+
+            TODO: Check this:
+            getSupportFragmentManager().beginTransaction()
+                .replace(R.id.content, fragment)
+                .addToBackStack(null)
+                .commit();
+            */
             showTaskEditPopup()
-
-            // crashes: Navigation destination io.engst.moodo:id/taskFragment referenced from action io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/tasklistFragment)
-            // findNavController().navigate(R.id.action_taskListFragment_to_taskEditFragment)
-        }
-
-        val swipeHandler = object : SwipeTaskCallback(requireContext()) {
-            override fun onDone(position: Int) {
-                val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
-                val task = (taskViewHolder.item as TaskListItem).task
-                viewModel.setDone(task)
-            }
-
-            override fun onShift(position: Int, shiftBy: DateShift) {
-                val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
-                val task = (taskViewHolder.item as TaskListItem).task
-                if (task.isDone) {
-                    viewModel.setUndone(task)
-                } else {
-                    viewModel.shift(task, shiftBy)
-                }
-            }
-
-            override fun onDelete(position: Int) {
-                val taskViewHolder =
-                    binding.taskList.findViewHolderForAdapterPosition(position) as TaskListAdapter.ViewHolder.TaskViewHolder
-                val task = (taskViewHolder.item as TaskListItem).task
-
-                activity?.findViewById<View>(R.id.activity_root_layout)?.let { view ->
-                    Snackbar
-                        .make(view, "Task deleted", Snackbar.LENGTH_LONG)
-                        .setAction("Undo") {
-                            viewModel.undoDelete(task)
-                        }
-                        .show()
-                }
-
-                viewModel.delete(task)
-            }
-        }
-
-        ItemTouchHelper(swipeHandler).attachToRecyclerView(binding.taskList)
-
-        lifecycle.coroutineScope.launchWhenResumed {
-            viewModel.scrollToToday.collect { _ ->
-                taskListAdapter!!.currentList.map { it.id }
-                    .indexOf(Group.Today.name)
-                    .takeIf { it != -1 }?.let { todayPosition ->
-                        binding.taskList.smoothScrollToPosition(todayPosition)
-                    }
-            }
         }
 
         return binding.root
@@ -106,16 +122,33 @@ class TaskListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        lifecycle.coroutineScope.launch {
+        lifecycle.coroutineScope.launchWhenResumed {
             viewModel.tasks.collect { list ->
-                taskListAdapter?.submitList(list) {
-                    logger.debug { "list items changed: ${list.map { it.id }}" }
-                }
+                logger.debug { "tasks=${list.map { it.id }}" }
+                listAdapter.submitList(list)
+            }
+        }
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            viewModel.scrollToToday.collect { _ ->
+                listAdapter.getCurrentItems().map { it.id }
+                    .indexOf(Group.Today.name)
+                    .takeIf { it != -1 }?.let { todayPosition ->
+                        logger.debug { "scrollToToday=$todayPosition" }
+                        binding.taskList.layoutManager?.startSmoothScroll(
+                            object : LinearSmoothScroller(context) {
+                                override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+                            }.apply {
+                                targetPosition = todayPosition
+                            }
+                        )
+                    }
             }
         }
     }
 
     private fun showTaskEditPopup(task: Task? = null) {
+        logger.debug { "showTaskEditPopup task=$task" }
         TaskEditFragment.show(requireActivity().supportFragmentManager, task)
     }
 }

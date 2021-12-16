@@ -1,4 +1,4 @@
-package io.engst.moodo.ui.tasks
+package io.engst.moodo.ui.tasks.touchhelper
 
 import android.content.Context
 import android.graphics.Canvas
@@ -6,22 +6,27 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.TextPaint
-import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.getSystemService
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
 import io.engst.moodo.model.types.DateShift
+import io.engst.moodo.ui.tasks.ListItem
+import io.engst.moodo.ui.tasks.TaskListAdapter
+import io.engst.moodo.ui.tasks.TaskListViewHolder
 
 const val swipeThreshold = 0.3f
 
-abstract class SwipeTaskCallback(val context: Context) :
-    ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+class TouchHelperCallback(
+    private val context: Context,
+    private val swipeContract: ListItemSwipeCallback,
+    private val dragContract: ListItemDragCallback
+) : ItemTouchHelper.Callback() {
 
     private var dateShiftAmount: DateShift = DateShift.OneDay
 
@@ -45,33 +50,138 @@ abstract class SwipeTaskCallback(val context: Context) :
         Paint.Align.LEFT
     )
 
-    // disable swipe for header items
-    override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) =
-        if (viewHolder.itemViewType == TaskListAdapter.ViewType.Header.ordinal) 0
-        else super.getMovementFlags(recyclerView, viewHolder)
+    override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+        super.onSelectedChanged(viewHolder, actionState)
+
+        (viewHolder as? TaskListViewHolder.TaskViewHolder)?.item?.let { item ->
+            when (actionState) {
+                ACTION_STATE_DRAG -> {
+                    dragContract.onDragStart(viewHolder.adapterPosition, item)
+                    viewHolder.selected = true
+                }
+                ACTION_STATE_SWIPE -> {
+                    //swipeContract.onStartSwipe(viewHolder.adapterPosition, item)
+                }
+                ACTION_STATE_IDLE -> {
+                }
+            }
+        }
+    }
+
+    override fun getMovementFlags(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder
+    ): Int {
+        return when (viewHolder.itemViewType) {
+            TaskListAdapter.ViewType.Header.ordinal -> 0 // don't drag or swipe header items
+            TaskListAdapter.ViewType.Task.ordinal -> {
+                val holder = viewHolder as TaskListViewHolder.TaskViewHolder
+                val item = holder.item
+                val task = (item as ListItem.TaskItem).task
+                when {
+                    task.isDone -> makeMovementFlags(0, LEFT or RIGHT)
+                    task.isScheduled -> makeMovementFlags(0, LEFT or RIGHT)
+                    !(task.isScheduled && task.isDone) -> {
+                        if (dragContract.canDrag(holder.adapterPosition, item)) {
+                            makeMovementFlags(UP or DOWN, LEFT)
+                        } else {
+                            0
+                        }
+                    }
+                    else -> 0
+                }
+            }
+            else -> 0
+        }
+    }
+
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+        when (direction) {
+            LEFT -> {
+                val holder = viewHolder as TaskListViewHolder.TaskViewHolder
+                val task = (holder.item as ListItem.TaskItem).task
+                if (task.isDone) {
+                    swipeContract.onRemoved(viewHolder.adapterPosition)
+                } else {
+                    swipeContract.onDone(viewHolder.adapterPosition)
+                }
+            }
+            else -> swipeContract.onShift(viewHolder.adapterPosition, dateShiftAmount)
+        }
+    }
+
+    override fun canDropOver(
+        recyclerView: RecyclerView,
+        current: RecyclerView.ViewHolder,
+        target: RecyclerView.ViewHolder
+    ): Boolean {
+        require(current is TaskListViewHolder.TaskViewHolder)
+        return when (target.itemViewType) {
+            TaskListAdapter.ViewType.Header.ordinal -> false
+            TaskListAdapter.ViewType.Task.ordinal -> {
+                val targetHolder = target as TaskListViewHolder.TaskViewHolder
+                val targetTask = (targetHolder.item as ListItem.TaskItem).task
+                when {
+                    targetTask.isBacklog -> dragContract.canDrop(
+                        current.adapterPosition,
+                        current.item!!,
+                        target.adapterPosition,
+                        targetHolder.item!!
+                    )
+                    else -> false
+                }
+            }
+            else -> false
+        }
+    }
 
     override fun onMove(
         recyclerView: RecyclerView,
-        viewHolder: RecyclerView.ViewHolder,
-        viewHolder2: RecyclerView.ViewHolder
-    ) = false
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        val holder = viewHolder as TaskListAdapter.ViewHolder.TaskViewHolder
-        if (direction == ItemTouchHelper.LEFT) {
-            if ((holder.item as TaskListItem).task.isDone) {
-                onDelete(viewHolder.adapterPosition)
-            } else {
-                onDone(viewHolder.adapterPosition)
+        current: RecyclerView.ViewHolder,
+        target: RecyclerView.ViewHolder
+    ): Boolean {
+        return (recyclerView.adapter as TaskListAdapter).run {
+            val canMove = when (target.itemViewType) {
+                TaskListAdapter.ViewType.Header.ordinal -> false
+                TaskListAdapter.ViewType.Task.ordinal -> {
+                    val holder = target as TaskListViewHolder.TaskViewHolder
+                    val targetTask = (holder.item as ListItem.TaskItem).task
+                    when {
+                        targetTask.isBacklog -> true
+                        else -> false
+                    }
+                }
+                else -> false
             }
-        } else {
-            onShift(viewHolder.adapterPosition, dateShiftAmount)
+
+            if (canMove) {
+                current as TaskListViewHolder.TaskViewHolder
+                target as TaskListViewHolder.TaskViewHolder
+                val from = current.adapterPosition
+                val to = target.adapterPosition
+                dragContract.onDragMove(from, current.item!!, to, target.item!!)
+                true
+            } else {
+                false
+            }
         }
+    }
+
+    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+        (viewHolder as? TaskListViewHolder.TaskViewHolder)?.let { holder ->
+            holder.selected = false
+            holder.item?.let { item ->
+                dragContract.onDrop(viewHolder.adapterPosition, item)
+            }
+        }
+
+        super.clearView(recyclerView, viewHolder)
 
         context.getSystemService<Vibrator>()
             ?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
     }
+
+    override fun getMoveThreshold(viewHolder: RecyclerView.ViewHolder): Float = 0.3f
 
     override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float = swipeThreshold
 
@@ -84,8 +194,8 @@ abstract class SwipeTaskCallback(val context: Context) :
         actionState: Int,
         isCurrentlyActive: Boolean
     ) {
-        val taskViewHolder = viewHolder as TaskListAdapter.ViewHolder.TaskViewHolder
-        val task = (taskViewHolder.item as TaskListItem).task
+        val taskViewHolder = viewHolder as TaskListViewHolder.TaskViewHolder
+        val task = (taskViewHolder.item as ListItem.TaskItem).task
         val itemView = taskViewHolder.itemView
         val dRatio = dX / itemView.width
         val tx = dX.toInt()
@@ -130,10 +240,6 @@ abstract class SwipeTaskCallback(val context: Context) :
 
         super.onChildDraw(canvas, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
     }
-
-    abstract fun onDone(position: Int)
-    abstract fun onShift(position: Int, shiftBy: DateShift)
-    abstract fun onDelete(position: Int)
 
     private fun convertToDateShift(ratio: Float): DateShift {
         val offset = (1f - swipeThreshold) / 0.04f

@@ -1,15 +1,19 @@
 package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
-import io.engst.moodo.model.persistence.TaskEntity
+import io.engst.moodo.model.persistence.TaskListOrderEntity
+import io.engst.moodo.model.persistence.toEntity
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TaskAction
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.Clock
 import java.time.LocalDateTime
 import java.util.*
@@ -22,12 +26,26 @@ class TaskRepository(
 ) {
     private val logger: Logger by injectLogger("model")
 
-    private val forceUpdateChannel = ConflatedBroadcastChannel<Unit>()
+    private val forceTaskUpdate = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    private val taskOrder: Flow<List<Long>> = taskDao.getTaskOrder()
+        .flowOn(Dispatchers.IO)
+        .map { Json.decodeFromString<List<Long>>(it.list_order) }
+        .onEach { logger.debug { "taskOrder=$it" } }
 
     val tasks: Flow<List<Task>> = taskDao.getTasks()
-        .combine(forceUpdateChannel.asFlow()) { tasks, _ -> tasks }
         .map { taskFactory.createTaskList(it) }
+        .combine(taskOrder) { tasks, order ->
+            val orderById = order.withIndex().associate { it.value to it.index }
+            tasks.sortedBy { orderById[it.id] }
+        }
         .flowOn(Dispatchers.IO)
+        .combine(forceTaskUpdate) { tasks, _ -> tasks }
+        .onEach { logger.debug { "tasks=${it.map { it.id }}" } }
+        .shareIn(GlobalScope, SharingStarted.Eagerly, 1)
 
     fun getTask(id: Long): Task {
         return runBlocking(Dispatchers.IO) {
@@ -38,28 +56,37 @@ class TaskRepository(
 
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
-            logger.debug { "add $task" }
-            taskDao.addTask(TaskEntity.from(task))
+            logger.debug { "addTask task=$task" }
+            taskDao.addTask(task.toEntity())
         }
     }
 
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
-            logger.debug { "update $task" }
-            taskDao.updateTask(TaskEntity.from(task))
+            logger.debug { "updateTask task=$task" }
+            taskDao.updateTask(task.toEntity())
+        }
+    }
+
+    suspend fun updateOrder(order: List<Long>) {
+        withContext(Dispatchers.IO) {
+            val orderAsString = Json.encodeToString(order)
+            val entity = TaskListOrderEntity(0L, orderAsString)
+            logger.debug { "updateOrder order=$order" }
+            taskDao.updateOrder(entity)
         }
     }
 
     suspend fun deleteTask(task: Task) {
         withContext(Dispatchers.IO) {
-            logger.debug { "delete $task" }
-            taskDao.deleteTask(TaskEntity.from(task))
+            logger.debug { "deleteTask task=$task" }
+            taskDao.deleteTask(task.toEntity())
         }
     }
 
     fun shift(taskId: Long, amount: TaskAction) {
         GlobalScope.launch(Dispatchers.IO) {
-            logger.debug { "shift #$taskId by $amount" }
+            logger.debug { "shift taskId=$taskId amount=$amount" }
 
             val helper = TaskListGroupHelper(LocalDateTime.now(clock), locale)
             val shiftOffset = when (amount) {
@@ -75,15 +102,14 @@ class TaskRepository(
 
     fun setDone(taskId: Long) {
         GlobalScope.launch(Dispatchers.IO) {
-            logger.debug { "setDone #$taskId" }
+            logger.debug { "setDone taskId=$taskId" }
             val task = taskDao.getTaskById(taskId)
             taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
         }
     }
 
-
     fun forceUpdateList() {
-        forceUpdateChannel.offer(Unit)
+        forceTaskUpdate.tryEmit(Unit)
     }
 
     /**
@@ -92,54 +118,39 @@ class TaskRepository(
     suspend fun insertDummyData() {
         withContext(Dispatchers.IO) {
             val now = LocalDateTime.now()
-            val tasks = arrayOf(
-                TaskEntity(
-                    null,
-                    "Willkommen bei Moodo! Organisiere Deine TODO's mit Moodoo ganz einfach und intuitiv. Du behälst stets den Überblick und verpasst keine wichtigen Dinge mehr. Alle TODO's werden chronologisch sortiert nach ihrem Fälligkeitsdatum!",
-                    now.minusMinutes(1),
-                    now.minusMinutes(1),
-                    null,
-                    0,
-                    0
+            val tasks = listOf(
+                Task(
+                    description = "Willkommen bei Moodo! Organisiere Deine TODO's mit Moodoo ganz einfach und intuitiv. Du behälst stets den Überblick und verpasst keine wichtigen Dinge mehr. Alle TODO's werden chronologisch sortiert nach ihrem Fälligkeitsdatum!",
+                    createdDate = now,
+                    isDue = false,
+                    priority = 0
                 ),
-                TaskEntity(
-                    null,
-                    "Wenn Du ein TODO erledigt hast, wische ihn nach links!",
-                    now,
-                    now,
-                    null,
-                    0,
-                    0
+                Task(
+                    description = "Wenn Du ein TODO erledigt hast, wische ihn nach links!",
+                    createdDate = now,
+                    isDue = false,
+                    priority = 0
                 ),
-                TaskEntity(
-                    null,
-                    "Hattest du keine Zeit ein TODO zu erledigen, wische ihn nach rechts und sortiere ihn zu einem späteren Zeitpunkt neu ein.",
-                    now.plusMinutes(1),
-                    now.plusMinutes(1),
-                    null,
-                    0,
-                    0
+                Task(
+                    description = "Hattest du keine Zeit ein TODO zu erledigen, wische ihn nach rechts und sortiere ihn zu einem späteren Zeitpunkt neu ein.",
+                    createdDate = now,
+                    isDue = false,
+                    priority = 0
                 ),
-                TaskEntity(
-                    null,
-                    "Ist ein TODO erledigt, steht er ganz oben in der Liste - in der Vergangenheit sozusagen. Sollte sich Dein TODO widerholen, wische ihn einfach wieder nach rechts - in die Zukunft ;)",
-                    now.plusMinutes(2),
-                    now.plusMinutes(2),
-                    null,
-                    0,
-                    0
+                Task(
+                    description = "Ist ein TODO erledigt, steht er ganz oben in der Liste - in der Vergangenheit sozusagen. Sollte sich Dein TODO widerholen, wische ihn einfach wieder nach rechts - in die Zukunft ;)",
+                    createdDate = now,
+                    isDue = false,
+                    priority = 0
                 ),
-                TaskEntity(
-                    null,
-                    "Löschen kannst du einen TODO, nachdem er erledigt ist und Du ihn nach links wischt.",
-                    now.plusMinutes(3),
-                    now.plusMinutes(3),
-                    null,
-                    0,
-                    0
+                Task(
+                    description = "Löschen kannst du einen TODO, nachdem er erledigt ist und Du ihn nach links wischt.",
+                    createdDate = now,
+                    isDue = false,
+                    priority = 0
                 )
-            )
-            taskDao.addTasks(*tasks)
+            ).map { it.toEntity() }.toTypedArray()
+            taskDao.addTask(*tasks)
         }
     }
 }

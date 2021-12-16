@@ -13,7 +13,6 @@ import io.engst.moodo.shared.msecsSinceEpoch
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 
 class TaskScheduler(
@@ -43,7 +42,7 @@ class TaskScheduler(
         val scheduledTasks = tasks.filter { it.isScheduled }
 
         if (scheduledTasks.isEmpty()) {
-            logger.debug { "no scheduled tasks - clear reminder!" }
+            logger.debug { "updateReminder: no scheduled tasks" }
             clearReminder()
             return
         }
@@ -54,15 +53,13 @@ class TaskScheduler(
                 if (date < acc) date else acc
             }
 
-        logger.info { "updateReminder earliestDate=$earliestDate" }
-
         alarmManager?.set(
             AlarmManager.RTC_WAKEUP,
             earliestDate.msecsSinceEpoch,
             buildPendingIntent()
         )
 
-        logger.info { "set reminder at $earliestDate" }
+        logger.info { "updateReminder: $earliestDate" }
     }
 
     private fun clearReminder() {

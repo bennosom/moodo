@@ -55,4 +55,5 @@
     <string name="task_button_save">Speichern</string>
     <string name="task_button_done">Erledigt</string>
     <string name="backlog">Irgendwann</string>
+    <string name="today_nothing_todo">Prima, alles erledigt für heute!</string>
 </resources>

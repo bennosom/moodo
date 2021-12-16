@@ -81,7 +81,8 @@ class TaskEditViewModel(
                 description = description,
                 createdDate = LocalDateTime.now(),
                 dueDate = dueDateTime,
-                isDue = false
+                isDue = false,
+                priority = 0
             )
 
             if (hasDescriptionOrDueDateChanged()) {
@@ -113,7 +114,8 @@ class TaskEditViewModel(
             description = description,
             createdDate = LocalDateTime.now(),
             dueDate = buildDueDate(),
-            isDue = false
+            isDue = false,
+            priority = 0
         )
         GlobalScope.launch { taskRepository.addTask(newTask) }
     }

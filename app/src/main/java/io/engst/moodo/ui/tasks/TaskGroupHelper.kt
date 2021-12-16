@@ -69,9 +69,8 @@ class TaskListGroupHelper(
         else -> throw IllegalStateException("whooat")
     }
 
-    fun getGroupItem(group: Group): GroupListItem = GroupListItem(
+    fun getGroupItem(group: Group): ListItem.GroupItem = ListItem.GroupItem(
         id = group.name,
-        index = 0,
         labelResId = getGroupLabel(group),
         date = when (group) {
             // fix date if Tomorrow and NextWeek point to the same date

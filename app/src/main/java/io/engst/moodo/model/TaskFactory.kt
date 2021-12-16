@@ -14,7 +14,8 @@ class TaskFactory(private val clock: Clock) {
             createdDate = entity.createdDate,
             isDue = entity.dueDate?.let { it < LocalDateTime.now(clock) } ?: false,
             dueDate = entity.dueDate,
-            doneDate = entity.doneDate
+            doneDate = entity.doneDate,
+            priority = entity.priority ?: 0
         )
 
     fun createTaskList(list: List<TaskEntity>): List<Task> = list.map { createTask(it) }

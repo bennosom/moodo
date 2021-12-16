@@ -16,6 +16,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.engst.moodo.R
 import io.engst.moodo.ui.MainActivity
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -23,8 +25,11 @@ import java.time.format.DateTimeFormatter
 const val LOG_TAG = "TaskDatabase"
 
 @Database(
-    version = 2,
-    entities = [TaskEntity::class]
+    version = 4,
+    entities = [
+        TaskEntity::class,
+        TaskListOrderEntity::class
+    ]
 )
 @TypeConverters(TaskConverter::class)
 abstract class TaskDatabase : RoomDatabase() {
@@ -49,6 +54,25 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
 
+        private val dbMigration2to3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // add new table column
+                db.execSQL("ALTER TABLE `task` ADD COLUMN `priority` INTEGER")
+            }
+        }
+
+        private val dbMigration3to4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // create new table
+                db.execSQL("CREATE TABLE IF NOT EXISTS `task_list_order` (`list_id` INTEGER PRIMARY KEY NOT NULL, `list_order` TEXT NOT NULL)")
+
+                // add default entity
+                val defaultOrder: List<Long> = emptyList() // no default order
+                val a = Json.encodeToString(defaultOrder)
+                db.execSQL("INSERT INTO `task_list_order` (`list_id`,`list_order`) VALUES (0, '$a')")
+            }
+        }
+
         fun getInstance(context: Context): TaskDatabase {
             if (database == null) {
                 synchronized(TaskDatabase::class.java) {
@@ -56,7 +80,11 @@ abstract class TaskDatabase : RoomDatabase() {
                         context.applicationContext,
                         TaskDatabase::class.java,
                         "moodoDb"
-                    ).addMigrations(dbMigration1to2).build()
+                    )
+                        .addMigrations(dbMigration1to2)
+                        .addMigrations(dbMigration2to3)
+                        .addMigrations(dbMigration3to4)
+                        .build()
                 }
             }
             return database!!

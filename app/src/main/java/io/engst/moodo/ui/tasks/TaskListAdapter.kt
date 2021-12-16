@@ -1,146 +1,223 @@
 package io.engst.moodo.ui.tasks
 
-import android.graphics.Paint
-import android.graphics.Typeface
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
+import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
-import java.time.LocalDateTime
+import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.ui.tasks.touchhelper.ListItemDragCallback
+import io.engst.moodo.ui.tasks.touchhelper.ListItemSwipeCallback
+import io.engst.moodo.ui.tasks.touchhelper.TouchHelperCallback
+import java.util.*
 
-sealed class ListItem {
-    abstract val id: String
-    abstract val index: Int
-}
-
-data class GroupListItem(
-    override val id: String,
-    override val index: Int,
-    val labelResId: Int,
-    val date: LocalDateTime
-) : ListItem()
-
-data class TaskListItem(
-    override val id: String,
-    override val index: Int,
-    val dateText: String,
-    val task: Task
-) : ListItem()
-
-typealias OnTaskListItemClicked = (task: Task) -> Unit
-
-class TaskListAdapter(private val onClick: OnTaskListItemClicked) :
-    ListAdapter<ListItem, RecyclerView.ViewHolder>(ItemDiffer) {
+class TaskListAdapter(
+    private val clickListener: TaskItemClickListener,
+    private val swipeListener: TaskItemSwipeListener,
+    private val dragListener: TaskItemDragListener
+) : RecyclerView.Adapter<TaskListViewHolder>() {
 
     enum class ViewType {
         Header,
         Task
     }
 
-    sealed class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var item: ListItem? = null
+    private val logger: Logger by injectLogger("view")
 
-        class TaskViewHolder(
-            private val binding: TaskListItemBinding,
-            private val onClick: OnTaskListItemClicked
-        ) : ViewHolder(binding.root) {
-            fun bind(item: TaskListItem) {
-                this.item = item
+    private var recyclerView: RecyclerView? = null
 
-                with(binding) {
-                    with(descriptionText) {
-                        paintFlags = if (item.task.isDone) {
-                            paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                        } else {
-                            paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                        }
-                        typeface = if (item.task.isDue && !item.task.isDone) {
-                            Typeface.DEFAULT_BOLD
-                        } else {
-                            Typeface.DEFAULT
-                        }
-                        setTextColor(
-                            if (item.task.isDone) context.getColor(R.color.text2Color)
-                            else context.getColor(R.color.textOnSurface)
-                        )
-                        text = item.task.description
-                    }
+    private val currentItems: MutableList<ListItem> = mutableListOf()
 
-                    with(dueDate) {
-                        setTextColor(
-                            if (item.task.isDone) context.getColor(R.color.text2Color)
-                            else context.getColor(R.color.textOnSurface)
-                        )
-                        text = item.dateText
-                    }
+    private val diffCallback = object : DiffUtil.Callback() {
+        val oldList: List<ListItem> = currentItems
+        var newList: List<ListItem> = emptyList()
 
-                    root.setOnClickListener {
-                        onClick(item.task)
-                    }
+        override fun getOldListSize(): Int = oldList.size
+
+        override fun getNewListSize(): Int = newList.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+            oldList[oldItemPosition].id == newList[newItemPosition].id
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+            oldList[oldItemPosition] == newList[newItemPosition]
+    }
+
+    private var itemTouchHelper: ItemTouchHelper? = null
+
+    private var dragItem: ListItem? = null
+    private var dropItem: ListItem? = null
+
+    private val swipeContract = object : ListItemSwipeCallback {
+        override fun onDone(position: Int) {
+            findTaskForAdapterPosition(position)?.let { task ->
+                swipeListener.onDone(task)
+            }
+        }
+
+        override fun onShift(position: Int, shiftBy: DateShift) {
+            findTaskForAdapterPosition(position)?.let { task ->
+                swipeListener.onShift(task, shiftBy)
+            }
+        }
+
+        override fun onRemoved(position: Int) {
+            findTaskForAdapterPosition(position)?.let { task ->
+                swipeListener.onRemoved(task)
+            }
+        }
+    }
+
+    private val dragContract = object : ListItemDragCallback {
+        override fun canDrag(position: Int, item: ListItem): Boolean {
+            logger.debug { "canDrag ${item.id} at $position" }
+            return (item as? ListItem.TaskItem)?.task?.let { dragTask ->
+                dragListener.canDrag(dragTask)
+            } ?: false
+        }
+
+        override fun onDragStart(position: Int, item: ListItem) {
+            logger.debug { "onDragStart #${item.id} at $position" }
+            (item as? ListItem.TaskItem)?.task?.let { dragTask ->
+                dragListener.onDragStart(dragTask)
+            }
+            dragItem = item
+        }
+
+        override fun canDrop(
+            position: Int,
+            item: ListItem,
+            targetPosition: Int,
+            targetItem: ListItem
+        ): Boolean {
+            logger.debug { "canDrop ${item.id} at $targetPosition" }
+            return (item as? ListItem.TaskItem)?.task?.let { dragTask ->
+                (targetItem as? ListItem.TaskItem)?.task?.let { dropTask ->
+                    dragListener.canDrop(dragTask, dropTask)
+                }
+            } ?: false
+        }
+
+        override fun onDragMove(
+            position: Int,
+            item: ListItem,
+            targetPosition: Int,
+            targetItem: ListItem
+        ) {
+            logger.debug { "onDragMove #${item.id} to $targetPosition" }
+            (item as? ListItem.TaskItem)?.task?.let { dragTask ->
+                (targetItem as? ListItem.TaskItem)?.task?.let { dropTask ->
+                    Collections.swap(currentItems, position, targetPosition)
+                    notifyItemMoved(position, targetPosition)
+                    dragListener.onDragMove(dragTask, dropTask)
+                    dropItem = targetItem
                 }
             }
         }
 
-        class HeaderViewHolder(
-            private val binding: TaskListItemHeaderBinding
-        ) : ViewHolder(binding.root) {
-            fun bind(item: GroupListItem) {
-                this.item = item
-
-                binding.headerText.text = binding.root.context.getString(item.labelResId)
+        override fun onDrop(position: Int, item: ListItem) {
+            logger.debug { "onDrop #${item.id}" }
+            (dragItem as? ListItem.TaskItem)?.task?.let { dragTask ->
+                (dropItem as? ListItem.TaskItem)?.task?.let { dropTask ->
+                    dragListener.onDrop(dragTask, dropTask)
+                }
             }
+            dragItem = null
+            dropItem = null
         }
     }
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
-        is GroupListItem -> ViewType.Header.ordinal
-        is TaskListItem -> ViewType.Task.ordinal
-        else -> throw IllegalArgumentException("unknown list item type")
+        is ListItem.GroupItem -> ViewType.Header.ordinal
+        is ListItem.TaskItem -> ViewType.Task.ordinal
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskListViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             ViewType.Header.ordinal ->
-                ViewHolder.HeaderViewHolder(
+                TaskListViewHolder.HeaderViewHolder(
                     TaskListItemHeaderBinding.inflate(inflater, parent, false)
                 )
             ViewType.Task.ordinal ->
-                ViewHolder.TaskViewHolder(
+                TaskListViewHolder.TaskViewHolder(
                     TaskListItemBinding.inflate(inflater, parent, false),
-                    onClick
+                    clickListener
                 )
             else -> throw IllegalArgumentException("unknown view type")
         }
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = when (holder) {
-        is ViewHolder.HeaderViewHolder -> {
-            holder.bind(getItem(position) as GroupListItem)
-        }
-        is ViewHolder.TaskViewHolder -> {
-            holder.bind(getItem(position) as TaskListItem)
-        }
-        else -> throw IllegalArgumentException("unknown view holder type")
+    override fun onBindViewHolder(holder: TaskListViewHolder, position: Int) = when (holder) {
+        is TaskListViewHolder.HeaderViewHolder -> holder.bind(getItem(position) as ListItem.GroupItem)
+        is TaskListViewHolder.TaskViewHolder -> holder.bind(getItem(position) as ListItem.TaskItem)
     }
 
-    object ItemDiffer : DiffUtil.ItemCallback<ListItem>() {
-        override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
-            return when {
-                oldItem is GroupListItem && newItem is GroupListItem -> oldItem.date == newItem.date
-                oldItem is TaskListItem && newItem is TaskListItem -> oldItem.id == newItem.id
-                else -> false
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        this.recyclerView = recyclerView
+        super.onAttachedToRecyclerView(recyclerView)
+        attachTouchHelper(recyclerView)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        detachTouchHelper()
+        super.onDetachedFromRecyclerView(recyclerView)
+        this.recyclerView = null
+    }
+
+    override fun getItemCount(): Int = diffCallback.oldList.size
+
+    fun submitList(updatedList: List<ListItem>) {
+        diffCallback.newList = updatedList
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        currentItems.clear()
+        currentItems.addAll(updatedList)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    fun getCurrentItems(): List<ListItem> = currentItems
+
+    fun startDrag(holder: TaskListViewHolder) {
+        dragItem = holder.item
+        itemTouchHelper?.startDrag(holder)
+    }
+
+    fun isDragActive(): Boolean = dragItem != null
+
+    fun stopDrag() {
+        detachTouchHelper()
+        recyclerView?.let { attachTouchHelper(it) }
+        dragItem = null
+    }
+
+    private fun getItem(position: Int) = diffCallback.oldList[position]
+
+    private fun attachTouchHelper(recyclerView: RecyclerView) {
+        itemTouchHelper = ItemTouchHelper(
+            TouchHelperCallback(
+                recyclerView.context,
+                swipeContract,
+                dragContract
+            )
+        ).apply {
+            attachToRecyclerView(recyclerView)
+        }
+    }
+
+    private fun detachTouchHelper() {
+        itemTouchHelper?.attachToRecyclerView(null)
+        itemTouchHelper = null
+    }
+
+    private fun findTaskForAdapterPosition(position: Int): Task? =
+        recyclerView?.findViewHolderForAdapterPosition(position)?.let {
+            (it as TaskListViewHolder.TaskViewHolder).let { taskViewHolder ->
+                (taskViewHolder.item as ListItem.TaskItem).task
             }
         }
-
-        override fun areContentsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
-            return oldItem == newItem
-        }
-    }
 }
