@@ -44,7 +44,7 @@ class TaskListFragment : Fragment() {
             if (task.isDone) {
                 viewModel.undone(task)
             } else {
-                viewModel.shift(task, shiftBy)
+                viewModel.shiftBy(task, shiftBy)
             }
         }
 

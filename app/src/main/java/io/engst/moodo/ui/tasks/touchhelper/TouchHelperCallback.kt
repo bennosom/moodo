@@ -242,12 +242,11 @@ class TouchHelperCallback(
     }
 
     private fun convertToDateShift(ratio: Float): DateShift {
-        val offset = (1f - swipeThreshold) / 0.04f
+        val offset = (1f - swipeThreshold) / 0.03f
         return when (ratio) {
             in swipeThreshold..swipeThreshold + offset * 0.01f -> DateShift.OneDay
             in swipeThreshold + offset * 0.01f..swipeThreshold + offset * 0.02f -> DateShift.TwoDays
             in swipeThreshold + offset * 0.02f..swipeThreshold + offset * 0.03f -> DateShift.OneWeek
-            in swipeThreshold + offset * 0.03f..swipeThreshold + offset * 0.04f -> DateShift.OneMonth
             else -> DateShift.None
         }
     }

@@ -89,12 +89,12 @@ class TaskNotifications(
                 val actionShiftOneDay: NotificationCompat.Action =
                     NotificationCompat.Action.Builder(
                         R.drawable.ic_more_time_24,
-                        context.getString(R.string.notification_action_task_shift_one_day),
+                        context.getString(R.string.tomorrow),
                         PendingIntent.getBroadcast(
                             context,
                             notificationId,
                             Intent(context, TaskActionReceiver::class.java).apply {
-                                action = TaskAction.ShiftOneDay.action
+                                action = TaskAction.ShiftToTomorrow.action
                                 putExtra(extraTaskId, taskId)
                             },
                             PendingIntent.FLAG_UPDATE_CURRENT
@@ -104,12 +104,12 @@ class TaskNotifications(
                 val actionShiftOneWeek: NotificationCompat.Action =
                     NotificationCompat.Action.Builder(
                         R.drawable.ic_more_time_24,
-                        context.getString(R.string.notification_action_task_shift_one_week),
+                        context.getString(R.string.next_week),
                         PendingIntent.getBroadcast(
                             context,
                             notificationId,
                             Intent(context, TaskActionReceiver::class.java).apply {
-                                action = TaskAction.ShiftOneWeek.action
+                                action = TaskAction.ShiftToNextWeek.action
                                 putExtra(extraTaskId, taskId)
                             },
                             PendingIntent.FLAG_UPDATE_CURRENT

@@ -3,6 +3,7 @@ package io.engst.moodo.model
 import io.engst.moodo.model.persistence.TaskDao
 import io.engst.moodo.model.persistence.TaskListOrderEntity
 import io.engst.moodo.model.persistence.toEntity
+import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TaskAction
 import io.engst.moodo.shared.Logger
@@ -15,6 +16,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
@@ -84,19 +86,53 @@ class TaskRepository(
         }
     }
 
-    fun shift(taskId: Long, amount: TaskAction) {
+    fun shiftTo(taskId: Long, shiftTo: TaskAction) {
         GlobalScope.launch(Dispatchers.IO) {
-            logger.debug { "shift taskId=$taskId amount=$amount" }
+            logger.debug { "shiftTo taskId=$taskId shiftTo=$shiftTo" }
 
             val helper = TaskListGroupHelper(LocalDateTime.now(clock), locale)
-            val shiftOffset = when (amount) {
-                TaskAction.ShiftOneDay -> helper.tomorrow.atTime(9, 0)
-                TaskAction.ShiftOneWeek -> helper.startOfNextWeek.atTime(9, 0)
-                else -> throw IllegalStateException("failed to shift task by $amount")
+            val updatedDueDate = when (shiftTo) {
+                TaskAction.ShiftToTomorrow -> helper.tomorrow.atTime(9, 0)
+                TaskAction.ShiftToNextWeek -> helper.startOfNextWeek.atTime(9, 0)
+                else -> throw IllegalStateException("failed to shift task to $shiftTo")
             }
 
             val task = taskDao.getTaskById(taskId)
-            taskDao.updateTask(task.copy(dueDate = shiftOffset))
+            taskDao.updateTask(
+                task.copy(
+                    dueDate = updatedDueDate,
+                    doneDate = null
+                )
+            )
+        }
+    }
+
+    fun shiftBy(taskId: Long, shiftBy: DateShift) {
+        GlobalScope.launch(Dispatchers.IO) {
+            logger.debug { "shiftBy taskId=$taskId shiftBy=$shiftBy" }
+
+            val task = taskDao.getTaskById(taskId)
+            val baseDate = when {
+                task.doneDate != null -> LocalDateTime.of(
+                    LocalDate.now(clock),
+                    task.dueDate!!.toLocalTime()
+                )
+                task.dueDate != null -> task.dueDate
+                else -> LocalDateTime.now(clock)
+            }
+            val updatedDueDate = when (shiftBy) {
+                DateShift.None -> baseDate
+                DateShift.OneDay -> baseDate.plusDays(1)
+                DateShift.TwoDays -> baseDate.plusDays(2)
+                DateShift.OneWeek -> baseDate.plusWeeks(1)
+            }
+
+            taskDao.updateTask(
+                task.copy(
+                    dueDate = updatedDueDate,
+                    doneDate = null
+                )
+            )
         }
     }
 

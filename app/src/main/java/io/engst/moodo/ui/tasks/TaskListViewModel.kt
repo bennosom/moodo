@@ -45,27 +45,8 @@ class TaskListViewModel(
         _scrollToToday.tryEmit(Unit)
     }
 
-    fun shift(task: Task, shiftBy: DateShift) {
-        viewModelScope.launch(dispatcher) {
-            val baseDate = when {
-                task.isScheduled && !task.isDone && !task.isDue -> task.dueDate!!
-                else -> LocalDateTime.now(clock)
-            }
-
-            val shiftedDueDate = when (shiftBy) {
-                DateShift.None -> baseDate
-                DateShift.OneDay -> baseDate.plusDays(1)
-                DateShift.TwoDays -> baseDate.plusDays(2)
-                DateShift.OneWeek -> baseDate.plusWeeks(1)
-                DateShift.OneMonth -> baseDate.plusMonths(1)
-            }
-
-            val update = task.copy(
-                dueDate = shiftedDueDate,
-                doneDate = null
-            )
-            taskRepository.updateTask(update)
-        }
+    fun shiftBy(task: Task, shiftBy: DateShift) {
+        taskRepository.shiftBy(task.id!!, shiftBy)
     }
 
     fun done(task: Task) {

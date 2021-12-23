@@ -20,14 +20,14 @@ class TaskActionReceiver : BroadcastReceiver() {
         logger.debug { "onReceive $intent with extras ${intent.extraAsString}" }
 
         when (intent.action) {
-            TaskAction.ShiftOneDay.action -> {
+            TaskAction.ShiftToTomorrow.action -> {
                 intent.getLongExtra(extraTaskId, -1L).takeIf { it > 0 }?.let {
-                    repository.shift(it, TaskAction.ShiftOneDay)
+                    repository.shiftTo(it, TaskAction.ShiftToTomorrow)
                 }
             }
-            TaskAction.ShiftOneWeek.action -> {
+            TaskAction.ShiftToNextWeek.action -> {
                 intent.getLongExtra(extraTaskId, -1L).takeIf { it > 0 }?.let {
-                    repository.shift(it, TaskAction.ShiftOneWeek)
+                    repository.shiftTo(it, TaskAction.ShiftToNextWeek)
                 }
             }
             TaskAction.Done.action -> {
