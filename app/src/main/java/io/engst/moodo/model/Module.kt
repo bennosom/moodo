@@ -1,22 +1,13 @@
 package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDatabase
-import io.engst.moodo.shared.logPrefix
-import org.koin.core.parameter.parametersOf
+import io.engst.moodo.shared.getLogger
 import org.koin.dsl.module
-
-const val TAG = "model"
 
 val moduleModel = module {
     single { TaskDatabase.getInstance(get()).taskDao }
-    single { TaskScheduler(get { parametersOf(TAG, logPrefix<TaskScheduler>()) }, get()) }
+    single { TaskScheduler(getLogger<TaskScheduler>("scheduler"), get()) }
     single { TaskFactory(get()) }
     single { TaskRepository(get(), get(), get(), get()) }
-    single {
-        TaskNotifications(
-            get { parametersOf(TAG, logPrefix<TaskNotifications>()) },
-            get(),
-            get()
-        )
-    }
+    single { TaskNotifications(getLogger<TaskNotifications>("notification"), get(), get()) }
 }

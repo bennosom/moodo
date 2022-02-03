@@ -30,6 +30,7 @@ import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.ui.LifecycleEventLogger
 import io.engst.moodo.ui.prettyFormat
 import io.engst.moodo.ui.tasks.TaskListGroupHelper
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -69,6 +70,10 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
                 show(fragmentManager, TaskEditFragment::class.simpleName)
             }
         }
+    }
+
+    init {
+        lifecycle.addObserver(LifecycleEventLogger("TaskEditFragment"))
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

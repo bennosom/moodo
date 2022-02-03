@@ -15,6 +15,7 @@ import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
+import io.engst.moodo.ui.LifecycleEventLogger
 import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import kotlinx.coroutines.flow.collect
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -83,6 +84,10 @@ class TaskListFragment : Fragment() {
                 .filterIsInstance<ListItem.TaskItem>()
                 .map { it.id.toLong() })
         }
+    }
+
+    init {
+        lifecycle.addObserver(LifecycleEventLogger("TaskListFragment"))
     }
 
     override fun onCreateView(

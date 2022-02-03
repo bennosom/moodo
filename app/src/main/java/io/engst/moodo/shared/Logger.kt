@@ -3,40 +3,42 @@ package io.engst.moodo.shared
 import android.util.Log
 
 interface Logger {
-    fun debug(supplier: () -> String)
+    fun debug(block: () -> String)
 
-    fun info(supplier: () -> String)
+    fun info(block: () -> String)
 
-    fun warn(supplier: () -> String)
+    fun warn(block: () -> String)
 
-    fun error(tr: Throwable? = null, supplier: () -> String)
+    fun error(throwable: Throwable? = null, block: () -> String)
 }
 
 class LogCatLogger(
-    private val tag: String? = "empty",
+    private val tag: String?,
     private val prefix: String? = ""
 ) : Logger {
     companion object {
-        inline fun <reified T : Any> create(tag: String? = null): Logger {
-            return LogCatLogger(tag, logPrefix<T>())
+        inline fun <reified T : Any> create(tag: String? = null, prefix: String? = null): Logger {
+            return LogCatLogger(tag, prefix?.let { "[$prefix] " } ?: logPrefix<T>())
         }
     }
 
-    override fun debug(supplier: () -> String) {
-        Log.d(tag, prefix + supplier())
+    override fun debug(block: () -> String) {
+        Log.d(tag, prefix + block())
     }
 
-    override fun info(supplier: () -> String) {
-        Log.i(tag, prefix + supplier())
+    override fun info(block: () -> String) {
+        Log.i(tag, prefix + block())
     }
 
-    override fun warn(supplier: () -> String) {
-        Log.w(tag, prefix + supplier())
+    override fun warn(block: () -> String) {
+        Log.w(tag, prefix + block())
     }
 
-    override fun error(tr: Throwable?, supplier: () -> String) {
-        Log.e(tag, prefix + supplier(), tr)
+    override fun error(throwable: Throwable?, block: () -> String) {
+        Log.e(tag, prefix + block(), throwable)
     }
 }
 
-inline fun <reified T : Any> logPrefix(): String = "[${T::class.java.simpleName}] "
+fun logPrefix(prefix: String): String = "[$prefix] "
+
+inline fun <reified T : Any> logPrefix(): String = logPrefix(T::class.java.simpleName)

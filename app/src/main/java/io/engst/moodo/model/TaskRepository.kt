@@ -26,7 +26,7 @@ class TaskRepository(
     private val clock: Clock,
     private val locale: Locale
 ) {
-    private val logger: Logger by injectLogger("model")
+    private val logger: Logger by injectLogger(tag = "repository", prefix = "TaskRepository")
 
     private val forceTaskUpdate = MutableSharedFlow<Unit>(
         replay = 1,

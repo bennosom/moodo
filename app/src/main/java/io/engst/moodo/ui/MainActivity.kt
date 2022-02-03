@@ -21,8 +21,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
 
-
-    private val logger: Logger by injectLogger(MainActivity::class.simpleName)
+    private val logger: Logger by injectLogger("view")
     private val viewModel: TaskListViewModel by viewModel()
     private val repository: TaskRepository by inject()
     private val taskScheduler: TaskScheduler by inject()
@@ -35,6 +34,10 @@ class MainActivity : AppCompatActivity() {
         registerForActivityResult(SelectFileResultContract()) { fileUri ->
             fileUri?.let { TaskDatabase.import(this, it) }
         }
+
+    init {
+        lifecycle.addObserver(LifecycleEventLogger("MainActivity"))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
