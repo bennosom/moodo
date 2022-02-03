@@ -144,7 +144,7 @@ class TaskRepository(
         }
     }
 
-    fun forceUpdateList() {
+    fun forceUpdate() {
         forceTaskUpdate.tryEmit(Unit)
     }
 

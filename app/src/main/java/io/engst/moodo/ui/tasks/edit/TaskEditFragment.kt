@@ -77,15 +77,13 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.setOnShowListener { dialog ->
-            (dialog as BottomSheetDialog).findViewById<FrameLayout>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )?.let {
-                BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED
+        return (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
+            setOnShowListener {
+                findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)?.let { frameLayout ->
+                    BottomSheetBehavior.from(frameLayout).state = BottomSheetBehavior.STATE_EXPANDED
+                }
             }
         }
-        return dialog
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,13 +118,12 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
             viewModel.description = text.toString()
         }
         binding.descriptionText.editText?.requestFocus()
-        binding.descriptionText.editText?.setOnTouchListener { v, event ->
-            if (v.hasFocus()) {
-                v.parent.requestDisallowInterceptTouchEvent(true)
+        binding.descriptionText.editText?.setOnTouchListener { editTextView, event ->
+            if (editTextView.hasFocus()) {
+                editTextView.parent.requestDisallowInterceptTouchEvent(true)
                 when (event.actionMasked) {
                     MotionEvent.ACTION_SCROLL -> {
-                        v.parent.requestDisallowInterceptTouchEvent(false)
-                        true
+                        editTextView.parent.requestDisallowInterceptTouchEvent(false)
                     }
                 }
             }

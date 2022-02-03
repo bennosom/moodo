@@ -56,7 +56,7 @@ class TouchHelperCallback(
         (viewHolder as? TaskListViewHolder.TaskViewHolder)?.item?.let { item ->
             when (actionState) {
                 ACTION_STATE_DRAG -> {
-                    dragContract.onDragStart(viewHolder.adapterPosition, item)
+                    dragContract.onDragStart(viewHolder.absoluteAdapterPosition, item)
                     viewHolder.selected = true
                 }
                 ACTION_STATE_SWIPE -> {
@@ -82,7 +82,7 @@ class TouchHelperCallback(
                     task.isDone -> makeMovementFlags(0, LEFT or RIGHT)
                     task.isScheduled -> makeMovementFlags(0, LEFT or RIGHT)
                     !(task.isScheduled && task.isDone) -> {
-                        if (dragContract.canDrag(holder.adapterPosition, item)) {
+                        if (dragContract.canDrag(holder.absoluteAdapterPosition, item)) {
                             makeMovementFlags(UP or DOWN, LEFT)
                         } else {
                             0
@@ -101,12 +101,12 @@ class TouchHelperCallback(
                 val holder = viewHolder as TaskListViewHolder.TaskViewHolder
                 val task = (holder.item as ListItem.TaskItem).task
                 if (task.isDone) {
-                    swipeContract.onRemoved(viewHolder.adapterPosition)
+                    swipeContract.onRemoved(viewHolder.absoluteAdapterPosition)
                 } else {
-                    swipeContract.onDone(viewHolder.adapterPosition)
+                    swipeContract.onDone(viewHolder.absoluteAdapterPosition)
                 }
             }
-            else -> swipeContract.onShift(viewHolder.adapterPosition, dateShiftAmount)
+            else -> swipeContract.onShift(viewHolder.absoluteAdapterPosition, dateShiftAmount)
         }
     }
 
@@ -123,9 +123,9 @@ class TouchHelperCallback(
                 val targetTask = (targetHolder.item as ListItem.TaskItem).task
                 when {
                     targetTask.isBacklog -> dragContract.canDrop(
-                        current.adapterPosition,
+                        current.absoluteAdapterPosition,
                         current.item!!,
-                        target.adapterPosition,
+                        target.absoluteAdapterPosition,
                         targetHolder.item!!
                     )
                     else -> false
@@ -157,8 +157,8 @@ class TouchHelperCallback(
             if (canMove) {
                 current as TaskListViewHolder.TaskViewHolder
                 target as TaskListViewHolder.TaskViewHolder
-                val from = current.adapterPosition
-                val to = target.adapterPosition
+                val from = current.absoluteAdapterPosition
+                val to = target.absoluteAdapterPosition
                 dragContract.onDragMove(from, current.item!!, to, target.item!!)
                 true
             } else {
@@ -171,7 +171,7 @@ class TouchHelperCallback(
         (viewHolder as? TaskListViewHolder.TaskViewHolder)?.let { holder ->
             holder.selected = false
             holder.item?.let { item ->
-                dragContract.onDrop(viewHolder.adapterPosition, item)
+                dragContract.onDrop(viewHolder.absoluteAdapterPosition, item)
             }
         }
 

@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.topAppBar).apply {
             setNavigationOnClickListener {
                 logger.debug { "clicked toolbar navigation button" }
-                viewModel.scrollToToday()
+                viewModel.scrollToday()
             }
             setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
@@ -80,14 +80,6 @@ class MainActivity : AppCompatActivity() {
                     TaskEditFragment.show(supportFragmentManager, task)
                 }
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        lifecycle.coroutineScope.launchWhenResumed {
-            repository.forceUpdateList()
         }
     }
 

@@ -7,11 +7,12 @@ import io.engst.moodo.R
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
-import io.engst.moodo.shared.Logger
-import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
@@ -27,22 +28,31 @@ class TaskListViewModel(
     private val locale: Locale
 ) : ViewModel() {
 
-    private val logger: Logger by injectLogger("TaskListViewModel")
+    private var onlyScrollTodayAtFirstTime = true
 
-    private val _scrollToToday = MutableSharedFlow<Unit>(
+    private val _scrollToday = MutableSharedFlow<Unit>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    val scrollToToday: SharedFlow<Unit> = _scrollToToday
+    val scrollToday: Flow<Unit> = _scrollToday
 
-    private var cachedTasks: List<Task> = emptyList()
     val tasks: Flow<List<ListItem>> = taskRepository.tasks
-        .onEach { cachedTasks = it }
         .map { sortTasksWithHeader(it) }
         .flowOn(dispatcher)
 
-    fun scrollToToday() {
-        _scrollToToday.tryEmit(Unit)
+    fun scrollToday() {
+        _scrollToday.tryEmit(Unit)
+    }
+
+    fun scrollTodayFirstTimeOnly() {
+        if (onlyScrollTodayAtFirstTime) {
+            onlyScrollTodayAtFirstTime = false
+            scrollToday()
+        }
+    }
+
+    fun forceListUpdate() {
+        taskRepository.forceUpdate()
     }
 
     fun shiftBy(task: Task, shiftBy: DateShift) {

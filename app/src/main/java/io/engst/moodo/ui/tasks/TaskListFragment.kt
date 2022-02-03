@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskListBinding
@@ -74,7 +75,7 @@ class TaskListFragment : Fragment() {
         }
 
         override fun canDrop(dragTask: Task, dropTask: Task): Boolean {
-            //logger.debug { "canDrop #${dragTask.id}  <-> #${dropTask.id}" }
+            //logger.debug { "canDrop #${dragTask.id} <-> #${dropTask.id}" }
             return true
         }
 
@@ -97,7 +98,9 @@ class TaskListFragment : Fragment() {
     ): View {
         binding = FragmentTaskListBinding.inflate(inflater, container, false)
 
-        listAdapter = TaskListAdapter(clickListener, swipeListener, dragListener)
+        listAdapter = TaskListAdapter(clickListener, swipeListener, dragListener).apply {
+            stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        }
 
         binding.taskList.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -131,24 +134,35 @@ class TaskListFragment : Fragment() {
             viewModel.tasks.collect { list ->
                 logger.debug { "tasks=${list.map { it.id }}" }
                 listAdapter.submitList(list)
+
+                if (list.isNotEmpty()) {
+                    viewModel.scrollTodayFirstTimeOnly()
+                }
             }
         }
 
         lifecycle.coroutineScope.launchWhenResumed {
-            viewModel.scrollToToday.collect { _ ->
-                listAdapter.getCurrentItems().map { it.id }
-                    .indexOf(Group.Today.name)
-                    .takeIf { it != -1 }?.let { todayPosition ->
-                        logger.debug { "scrollToToday=$todayPosition" }
-                        binding.taskList.layoutManager?.startSmoothScroll(
-                            object : LinearSmoothScroller(context) {
-                                override fun getVerticalSnapPreference(): Int = SNAP_TO_START
-                            }.apply {
-                                targetPosition = todayPosition
-                            }
-                        )
-                    }
+            viewModel.scrollToday.collect {
+                scrollToToday()
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.forceListUpdate()
+    }
+
+    private fun scrollToToday() {
+        val todayIndex = listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
+        if (todayIndex > -1) {
+            binding.taskList.layoutManager?.startSmoothScroll(
+                object : LinearSmoothScroller(context) {
+                    override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+                }.apply {
+                    targetPosition = todayIndex
+                }
+            )
         }
     }
 
