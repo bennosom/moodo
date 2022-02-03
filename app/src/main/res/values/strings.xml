@@ -2,6 +2,11 @@
     <string name="app_name">Moodo</string>
 
     <string name="action_settings">Settings</string>
+
+    <string name="action_filter">Filter</string>
+    <string name="action_description_filter">Filter tasks</string>
+    <string name="action_search">Search</string>
+    <string name="action_description_search">Search tasks</string>
     <string name="action_backup">Export database</string>
     <string name="action_description_backup">Export database to file</string>
     <string name="action_restore">Import database</string>

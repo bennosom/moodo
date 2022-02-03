@@ -4,20 +4,36 @@
     tools:context="io.engst.moodo.ui.MainActivity">
 
     <item
-        android:id="@+id/backup"
-        android:title="@string/action_backup"
-        android:contentDescription="@string/action_description_backup"
-        app:showAsAction="never" />
-
+        android:id="@+id/search"
+        android:contentDescription="@string/action_description_search"
+        android:enabled="false"
+        android:icon="@drawable/ic_baseline_search_24"
+        android:title="@string/action_search"
+        app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/restore"
-        android:title="@string/action_restore"
-        android:contentDescription="@string/action_description_restore"
-        app:showAsAction="never" />
+        android:id="@+id/filter"
+        android:contentDescription="@string/action_description_filter"
+        android:enabled="false"
+        android:icon="@drawable/ic_baseline_filter_list_24"
+        android:title="@string/action_filter"
+        app:showAsAction="ifRoom" />
+
+    <group android:id="@+id/database">
+        <item
+            android:id="@+id/backup"
+            android:contentDescription="@string/action_description_backup"
+            android:title="@string/action_backup"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/restore"
+            android:contentDescription="@string/action_description_restore"
+            android:title="@string/action_restore"
+            app:showAsAction="never" />
+    </group>
 
     <item
         android:id="@+id/about"
-        android:title="@string/action_info"
         android:contentDescription="@string/action_description_about"
+        android:title="@string/action_info"
         app:showAsAction="never" />
 </menu>

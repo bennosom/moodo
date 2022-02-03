@@ -16,10 +16,12 @@
 
         <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogStyle</item>
         <item name="toolbarNavigationButtonStyle">@style/CustomToolbarNavigationButtonStyle</item>
+        <item name="toolbarStyle">@style/CustomToolbarStyle</item>
     </style>
 
     <style name="CustomToolbarStyle" parent="Widget.MaterialComponents.Toolbar.Surface">
         <item name="colorSurface">@color/toolBarBackground</item>
+        <item name="colorOnSurface">@color/textOnSurface</item>
     </style>
 
     <style name="CustomToolbarNavigationButtonStyle" parent="Widget.AppCompat.Toolbar.Button.Navigation">

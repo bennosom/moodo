@@ -2,6 +2,10 @@
     <string name="app_name">Moodo</string>
 
     <string name="action_settings">Einstellungen</string>
+    <string name="action_filter">Filtern</string>
+    <string name="action_description_filter">Aufgaben filtern</string>
+    <string name="action_search">Suchen</string>
+    <string name="action_description_search">Aufgaben suchen</string>
     <string name="action_backup">Datenbank exportieren</string>
     <string name="action_description_backup">Datenbank exportieren</string>
     <string name="action_restore">Datenbank importieren</string>
