@@ -27,15 +27,15 @@ class TaskListFragment : Fragment() {
 
     private val viewModel: TaskListViewModel by sharedViewModel()
     lateinit var binding: FragmentTaskListBinding
-    lateinit var listAdapter: TaskListAdapter
+    lateinit var listAdapter: ListItemAdapter
 
-    private val clickListener = object : TaskItemClickListener {
+    private val clickListener = object : ListItemClickListener {
         override fun onClick(task: Task) {
             showTaskEditPopup(task)
         }
     }
 
-    private val swipeListener = object : TaskItemSwipeListener {
+    private val swipeListener = object : ListItemSwipeListener {
         override fun onDone(task: Task) {
             logger.debug { "onDone #${task.id}" }
             viewModel.done(task)
@@ -64,7 +64,7 @@ class TaskListFragment : Fragment() {
         }
     }
 
-    private val dragListener = object : TaskItemDragListener {
+    private val dragListener = object : ListItemDragListener {
         override fun canDrag(dragTask: Task): Boolean {
             //logger.debug { "canDrag #${dragTask.id}" }
             return true
@@ -98,7 +98,7 @@ class TaskListFragment : Fragment() {
     ): View {
         binding = FragmentTaskListBinding.inflate(inflater, container, false)
 
-        listAdapter = TaskListAdapter(clickListener, swipeListener, dragListener).apply {
+        listAdapter = ListItemAdapter(clickListener, swipeListener, dragListener).apply {
             stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         }
 

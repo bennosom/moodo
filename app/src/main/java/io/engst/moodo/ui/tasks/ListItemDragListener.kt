@@ -2,7 +2,7 @@ package io.engst.moodo.ui.tasks
 
 import io.engst.moodo.model.types.Task
 
-interface TaskItemDragListener {
+interface ListItemDragListener {
     fun canDrag(dragTask: Task): Boolean
     fun onDragStart(dragTask: Task)
     fun canDrop(dragTask: Task, dropTask: Task): Boolean

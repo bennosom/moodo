@@ -9,14 +9,14 @@ import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
 
-sealed class TaskListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+sealed class ListItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     var item: ListItem? = null
 
     class TaskViewHolder(
         private val binding: TaskListItemBinding,
-        private val clickListener: TaskItemClickListener
-    ) : TaskListViewHolder(binding.root) {
+        private val clickListener: ListItemClickListener
+    ) : ListItemViewHolder(binding.root) {
 
         var selected: Boolean = false
             set(value) {
@@ -60,7 +60,7 @@ sealed class TaskListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     class HeaderViewHolder(
         private val binding: TaskListItemHeaderBinding
-    ) : TaskListViewHolder(binding.root) {
+    ) : ListItemViewHolder(binding.root) {
         fun bind(item: ListItem.GroupItem) {
             this.item = item
             binding.headerText.text = binding.root.context.getString(item.labelResId)

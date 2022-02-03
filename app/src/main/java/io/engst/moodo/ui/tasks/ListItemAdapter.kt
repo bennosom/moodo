@@ -16,11 +16,11 @@ import io.engst.moodo.ui.tasks.touchhelper.ListItemSwipeCallback
 import io.engst.moodo.ui.tasks.touchhelper.TouchHelperCallback
 import java.util.*
 
-class TaskListAdapter(
-    private val clickListener: TaskItemClickListener,
-    private val swipeListener: TaskItemSwipeListener,
-    private val dragListener: TaskItemDragListener
-) : RecyclerView.Adapter<TaskListViewHolder>() {
+class ListItemAdapter(
+    private val clickListener: ListItemClickListener,
+    private val swipeListener: ListItemSwipeListener,
+    private val dragListener: ListItemDragListener
+) : RecyclerView.Adapter<ListItemViewHolder>() {
 
     enum class ViewType {
         Header,
@@ -137,15 +137,15 @@ class TaskListAdapter(
         is ListItem.TaskItem -> ViewType.Task.ordinal
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskListViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListItemViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             ViewType.Header.ordinal ->
-                TaskListViewHolder.HeaderViewHolder(
+                ListItemViewHolder.HeaderViewHolder(
                     TaskListItemHeaderBinding.inflate(inflater, parent, false)
                 )
             ViewType.Task.ordinal ->
-                TaskListViewHolder.TaskViewHolder(
+                ListItemViewHolder.TaskViewHolder(
                     TaskListItemBinding.inflate(inflater, parent, false),
                     clickListener
                 )
@@ -153,9 +153,9 @@ class TaskListAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: TaskListViewHolder, position: Int) = when (holder) {
-        is TaskListViewHolder.HeaderViewHolder -> holder.bind(getItem(position) as ListItem.GroupItem)
-        is TaskListViewHolder.TaskViewHolder -> holder.bind(getItem(position) as ListItem.TaskItem)
+    override fun onBindViewHolder(holder: ListItemViewHolder, position: Int) = when (holder) {
+        is ListItemViewHolder.HeaderViewHolder -> holder.bind(getItem(position) as ListItem.GroupItem)
+        is ListItemViewHolder.TaskViewHolder -> holder.bind(getItem(position) as ListItem.TaskItem)
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -182,7 +182,7 @@ class TaskListAdapter(
 
     fun getCurrentItems(): List<ListItem> = currentItems
 
-    fun startDrag(holder: TaskListViewHolder) {
+    fun startDrag(holder: ListItemViewHolder) {
         dragItem = holder.item
         itemTouchHelper?.startDrag(holder)
     }
@@ -216,7 +216,7 @@ class TaskListAdapter(
 
     private fun findTaskForAdapterPosition(position: Int): Task? =
         recyclerView?.findViewHolderForAdapterPosition(position)?.let {
-            (it as TaskListViewHolder.TaskViewHolder).let { taskViewHolder ->
+            (it as ListItemViewHolder.TaskViewHolder).let { taskViewHolder ->
                 (taskViewHolder.item as ListItem.TaskItem).task
             }
         }

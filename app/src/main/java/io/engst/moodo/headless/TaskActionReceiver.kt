@@ -13,7 +13,7 @@ import io.engst.moodo.shared.injectLogger
 
 class TaskActionReceiver : BroadcastReceiver() {
 
-    private val logger: Logger by injectLogger("headless")
+    private val logger: Logger by injectLogger("notification")
     private val repository: TaskRepository by inject()
 
     override fun onReceive(context: Context, intent: Intent) {

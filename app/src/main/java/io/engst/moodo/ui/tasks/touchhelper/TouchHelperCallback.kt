@@ -17,8 +17,8 @@ import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.ui.tasks.ListItem
-import io.engst.moodo.ui.tasks.TaskListAdapter
-import io.engst.moodo.ui.tasks.TaskListViewHolder
+import io.engst.moodo.ui.tasks.ListItemAdapter
+import io.engst.moodo.ui.tasks.ListItemViewHolder
 
 const val swipeThreshold = 0.3f
 
@@ -53,7 +53,7 @@ class TouchHelperCallback(
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
         super.onSelectedChanged(viewHolder, actionState)
 
-        (viewHolder as? TaskListViewHolder.TaskViewHolder)?.item?.let { item ->
+        (viewHolder as? ListItemViewHolder.TaskViewHolder)?.item?.let { item ->
             when (actionState) {
                 ACTION_STATE_DRAG -> {
                     dragContract.onDragStart(viewHolder.absoluteAdapterPosition, item)
@@ -73,9 +73,9 @@ class TouchHelperCallback(
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         return when (viewHolder.itemViewType) {
-            TaskListAdapter.ViewType.Header.ordinal -> 0 // don't drag or swipe header items
-            TaskListAdapter.ViewType.Task.ordinal -> {
-                val holder = viewHolder as TaskListViewHolder.TaskViewHolder
+            ListItemAdapter.ViewType.Header.ordinal -> 0 // don't drag or swipe header items
+            ListItemAdapter.ViewType.Task.ordinal -> {
+                val holder = viewHolder as ListItemViewHolder.TaskViewHolder
                 val item = holder.item
                 val task = (item as ListItem.TaskItem).task
                 when {
@@ -98,7 +98,7 @@ class TouchHelperCallback(
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         when (direction) {
             LEFT -> {
-                val holder = viewHolder as TaskListViewHolder.TaskViewHolder
+                val holder = viewHolder as ListItemViewHolder.TaskViewHolder
                 val task = (holder.item as ListItem.TaskItem).task
                 if (task.isDone) {
                     swipeContract.onRemoved(viewHolder.absoluteAdapterPosition)
@@ -115,11 +115,11 @@ class TouchHelperCallback(
         current: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        require(current is TaskListViewHolder.TaskViewHolder)
+        require(current is ListItemViewHolder.TaskViewHolder)
         return when (target.itemViewType) {
-            TaskListAdapter.ViewType.Header.ordinal -> false
-            TaskListAdapter.ViewType.Task.ordinal -> {
-                val targetHolder = target as TaskListViewHolder.TaskViewHolder
+            ListItemAdapter.ViewType.Header.ordinal -> false
+            ListItemAdapter.ViewType.Task.ordinal -> {
+                val targetHolder = target as ListItemViewHolder.TaskViewHolder
                 val targetTask = (targetHolder.item as ListItem.TaskItem).task
                 when {
                     targetTask.isBacklog -> dragContract.canDrop(
@@ -140,11 +140,11 @@ class TouchHelperCallback(
         current: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        return (recyclerView.adapter as TaskListAdapter).run {
+        return (recyclerView.adapter as ListItemAdapter).run {
             val canMove = when (target.itemViewType) {
-                TaskListAdapter.ViewType.Header.ordinal -> false
-                TaskListAdapter.ViewType.Task.ordinal -> {
-                    val holder = target as TaskListViewHolder.TaskViewHolder
+                ListItemAdapter.ViewType.Header.ordinal -> false
+                ListItemAdapter.ViewType.Task.ordinal -> {
+                    val holder = target as ListItemViewHolder.TaskViewHolder
                     val targetTask = (holder.item as ListItem.TaskItem).task
                     when {
                         targetTask.isBacklog -> true
@@ -155,8 +155,8 @@ class TouchHelperCallback(
             }
 
             if (canMove) {
-                current as TaskListViewHolder.TaskViewHolder
-                target as TaskListViewHolder.TaskViewHolder
+                current as ListItemViewHolder.TaskViewHolder
+                target as ListItemViewHolder.TaskViewHolder
                 val from = current.absoluteAdapterPosition
                 val to = target.absoluteAdapterPosition
                 dragContract.onDragMove(from, current.item!!, to, target.item!!)
@@ -168,7 +168,7 @@ class TouchHelperCallback(
     }
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-        (viewHolder as? TaskListViewHolder.TaskViewHolder)?.let { holder ->
+        (viewHolder as? ListItemViewHolder.TaskViewHolder)?.let { holder ->
             holder.selected = false
             holder.item?.let { item ->
                 dragContract.onDrop(viewHolder.absoluteAdapterPosition, item)
@@ -194,7 +194,7 @@ class TouchHelperCallback(
         actionState: Int,
         isCurrentlyActive: Boolean
     ) {
-        val taskViewHolder = viewHolder as TaskListViewHolder.TaskViewHolder
+        val taskViewHolder = viewHolder as ListItemViewHolder.TaskViewHolder
         val task = (taskViewHolder.item as ListItem.TaskItem).task
         val itemView = taskViewHolder.itemView
         val dRatio = dX / itemView.width
