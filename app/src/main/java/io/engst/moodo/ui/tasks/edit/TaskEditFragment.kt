@@ -136,11 +136,6 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
                 InputMethodManager.SHOW_IMPLICIT
             )
         }
-
-        logger.debug { "bexx1 ${view.height} ${view.measuredHeight}" }
-        requireActivity().findViewById<View>(android.R.id.content).rootView.afterMeasured {
-            logger.debug { "bexx2 ${view.height} ${view.measuredHeight}" }
-        }
     }
 
     private fun initActions() {
