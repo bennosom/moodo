@@ -14,6 +14,7 @@ import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskListBinding
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
+import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.LifecycleEventLogger
@@ -131,19 +132,43 @@ class TaskListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         lifecycle.coroutineScope.launchWhenResumed {
-            viewModel.tasks.collect { list ->
-                logger.debug { "tasks=${list.map { it.id }}" }
-                listAdapter.submitList(list)
-
-                if (list.isNotEmpty()) {
-                    viewModel.scrollTodayFirstTimeOnly()
+            viewModel.scrollFirstTime.collect {
+                val taskIndex = activity?.intent?.let { intent ->
+                    intent.getLongExtra(extraTaskId, -1L)
+                        .takeIf { it > -1L }
+                }?.let { taskId ->
+                    listAdapter.getCurrentItems().map { it.id }.indexOf(taskId.toString())
+                        .takeIf { it > -1 }
+                }
+                val todayIndex =
+                    listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
+                val index = taskIndex ?: todayIndex
+                logger.debug { "scrollFirstTime: $index" }
+                if (index > -1) {
+                    scrollTo(index)
                 }
             }
         }
 
         lifecycle.coroutineScope.launchWhenResumed {
             viewModel.scrollToday.collect {
-                scrollToToday()
+                val index =
+                    listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
+                logger.debug { "scrollToday: $index" }
+                if (index > -1) {
+                    scrollTo(index)
+                }
+            }
+        }
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            viewModel.tasks.collect { list ->
+                logger.debug { "tasks=${list.map { it.id }}" }
+                listAdapter.submitList(list)
+
+                if (list.isNotEmpty()) {
+                    viewModel.scrollFirstTime()
+                }
             }
         }
     }
@@ -153,14 +178,14 @@ class TaskListFragment : Fragment() {
         viewModel.forceListUpdate()
     }
 
-    private fun scrollToToday() {
-        val todayIndex = listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
-        if (todayIndex > -1) {
+    private fun scrollTo(index: Int) {
+        logger.debug { "scrollTo: $index" }
+        if (index > -1) {
             binding.taskList.layoutManager?.startSmoothScroll(
                 object : LinearSmoothScroller(context) {
                     override fun getVerticalSnapPreference(): Int = SNAP_TO_START
                 }.apply {
-                    targetPosition = todayIndex
+                    targetPosition = index
                 }
             )
         }

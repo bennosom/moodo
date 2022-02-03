@@ -7,6 +7,8 @@ import io.engst.moodo.R
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
+import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.injectLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -28,28 +30,41 @@ class TaskListViewModel(
     private val locale: Locale
 ) : ViewModel() {
 
-    private var onlyScrollTodayAtFirstTime = true
+    private val logger: Logger by injectLogger("list")
 
+    // scroll only at first time (app launch time)
+    private var firstTime = true
+
+    private val _scrollFirstTime = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val scrollFirstTime: Flow<Unit> = _scrollFirstTime
+
+    fun scrollFirstTime() {
+        if (firstTime) {
+            logger.debug { "first time scroll triggered!" }
+            _scrollFirstTime.tryEmit(Unit)
+            firstTime = false
+        }
+    }
+
+    // scroll to Today
     private val _scrollToday = MutableSharedFlow<Unit>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    val scrollToday: Flow<Unit> = _scrollToday
 
-    val tasks: Flow<List<ListItem>> = taskRepository.tasks
-        .map { sortTasksWithHeader(it) }
-        .flowOn(dispatcher)
+    val scrollToday: Flow<Unit> = _scrollToday
 
     fun scrollToday() {
         _scrollToday.tryEmit(Unit)
     }
 
-    fun scrollTodayFirstTimeOnly() {
-        if (onlyScrollTodayAtFirstTime) {
-            onlyScrollTodayAtFirstTime = false
-            scrollToday()
-        }
-    }
+    val tasks: Flow<List<ListItem>> = taskRepository.tasks
+        .map { sortTasksWithHeader(it) }
+        .flowOn(dispatcher)
 
     fun forceListUpdate() {
         taskRepository.forceUpdate()
