@@ -55,7 +55,7 @@ class TaskNotifications(
     }
 
     private fun updateNotifications(tasks: List<Task>) {
-        logger.debug { "updateNotifications tasks=$tasks" }
+        logger.debug { "updateNotifications tasks=${tasks.map { it.id }}" }
 
         val notifications = tasks
             .filter { it.isScheduled && it.isDue }

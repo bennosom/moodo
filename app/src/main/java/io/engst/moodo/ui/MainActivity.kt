@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
 
         if (intent.hasExtra(extraTaskId)) {
             intent.getLongExtra(extraTaskId, -1L).takeIf { it > -1 }?.let { taskId ->
-                logger.debug { "show task edit fragment for task#$taskId" }
+                logger.debug { "show task edit fragment for #$taskId" }
                 lifecycle.coroutineScope.launchWhenCreated {
                     val task = repository.getTask(taskId)
                     TaskEditFragment.show(supportFragmentManager, task)
@@ -93,8 +93,6 @@ class MainActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setView(customView)
-            .setTitle("About ${getString(R.string.app_name)}")
-            .setIcon(R.drawable.ic_launcher_foreground)
             .setNeutralButton("Close") { dialog, _ ->
                 dialog.dismiss()
             }
