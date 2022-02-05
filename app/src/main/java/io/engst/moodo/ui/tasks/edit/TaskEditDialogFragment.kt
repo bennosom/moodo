@@ -2,16 +2,13 @@ package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.text.format.DateFormat.is24HourFormat
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
-import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
-import androidx.fragment.app.FragmentManager
+import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -25,7 +22,6 @@ import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
 import io.engst.moodo.model.types.DateSuggestion
-import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger
@@ -38,7 +34,6 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-
 inline fun View.afterMeasured(crossinline block: () -> Unit) {
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
         override fun onGlobalLayout() {
@@ -50,30 +45,16 @@ inline fun View.afterMeasured(crossinline block: () -> Unit) {
     })
 }
 
-class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
+class TaskEditDialogFragment : BottomSheetDialogFragment() {
 
-    private val logger: Logger by injectLogger(TaskEditFragment::class.simpleName)
-    private lateinit var binding: FragmentTaskEditBinding
+    private val logger: Logger by injectLogger("dialog")
+
     private val viewModel: TaskEditViewModel by viewModel()
-    private var task: Task? = null
-
-    companion object {
-        private var instance: TaskEditFragment? = null
-
-        fun show(fragmentManager: FragmentManager, task: Task?) {
-            instance?.let {
-                it.dismiss()
-                instance = null
-            }
-            instance = TaskEditFragment().apply {
-                this.task = task
-                show(fragmentManager, TaskEditFragment::class.simpleName)
-            }
-        }
-    }
+    private val navigationArguments: TaskEditDialogFragmentArgs by navArgs()
+    private lateinit var binding: FragmentTaskEditBinding
 
     init {
-        lifecycle.addObserver(LifecycleEventLogger("TaskEditFragment"))
+        lifecycle.addObserver(LifecycleEventLogger("TaskEditDialogFragment"))
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -88,8 +69,7 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        viewModel.originalTask = task
+        viewModel.init(navigationArguments.taskId)
     }
 
     override fun onCreateView(
@@ -153,14 +133,12 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
             binding.buttonSave.apply {
                 text = getString(R.string.task_button_add)
                 setOnClickListener {
-                    viewModel.addNewTask()
+                    viewModel.addTask()
                     viewModel.description = ""
                     viewModel.dueDate = null
                     viewModel.dueTime = null
                     binding.descriptionText.editText?.setText(viewModel.description)
                     updateDateChips()
-                    context.getSystemService<Vibrator>()
-                        ?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
                 }
             }
         } else {
@@ -175,7 +153,7 @@ class TaskEditFragment private constructor() : BottomSheetDialogFragment() {
             }
 
             binding.buttonSave.setOnClickListener {
-                viewModel.saveChanges()
+                viewModel.saveTask()
                 dismiss()
             }
         }

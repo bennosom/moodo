@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
+import androidx.navigation.fragment.NavHostFragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
@@ -14,11 +16,9 @@ import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskListBinding
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Task
-import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.injectLogger
 import io.engst.moodo.ui.LifecycleEventLogger
-import io.engst.moodo.ui.tasks.edit.TaskEditFragment
 import kotlinx.coroutines.flow.collect
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
@@ -27,12 +27,13 @@ class TaskListFragment : Fragment() {
     private val logger: Logger by injectLogger("view")
 
     private val viewModel: TaskListViewModel by sharedViewModel()
+    private val navigationArguments: TaskListFragmentArgs by navArgs()
     lateinit var binding: FragmentTaskListBinding
     lateinit var listAdapter: ListItemAdapter
 
     private val clickListener = object : ListItemClickListener {
         override fun onClick(task: Task) {
-            showTaskEditPopup(task)
+            onTaskEditClicked(task.id)
         }
     }
 
@@ -111,18 +112,7 @@ class TaskListFragment : Fragment() {
 
         binding.taskAddButton.setOnClickListener {
             logger.debug { "taskAddButton clicked" }
-
-            /*
-            findNavController().navigate(R.id.action_taskListFragment_to_taskEditFragment)
-            crashes with Navigation destination io.engst.moodo:id/taskFragment referenced from action io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/tasklistFragment)
-
-            TODO: Check this:
-            getSupportFragmentManager().beginTransaction()
-                .replace(R.id.content, fragment)
-                .addToBackStack(null)
-                .commit();
-            */
-            showTaskEditPopup()
+            onTaskEditClicked()
         }
 
         return binding.root
@@ -130,36 +120,6 @@ class TaskListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        lifecycle.coroutineScope.launchWhenResumed {
-            viewModel.scrollFirstTime.collect {
-                val taskIndex = activity?.intent?.let { intent ->
-                    intent.getLongExtra(extraTaskId, -1L)
-                        .takeIf { it > -1L }
-                }?.let { taskId ->
-                    listAdapter.getCurrentItems().map { it.id }.indexOf(taskId.toString())
-                        .takeIf { it > -1 }
-                }
-                val todayIndex =
-                    listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
-                val index = taskIndex ?: todayIndex
-                logger.debug { "scrollFirstTime: $index" }
-                if (index > -1) {
-                    scrollTo(index)
-                }
-            }
-        }
-
-        lifecycle.coroutineScope.launchWhenResumed {
-            viewModel.scrollToday.collect {
-                val index =
-                    listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
-                logger.debug { "scrollToday: $index" }
-                if (index > -1) {
-                    scrollTo(index)
-                }
-            }
-        }
 
         lifecycle.coroutineScope.launchWhenResumed {
             viewModel.tasks.collect { list ->
@@ -171,6 +131,54 @@ class TaskListFragment : Fragment() {
                 }
             }
         }
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            viewModel.scrollFirstTime.collect {
+                logger.debug { "scrollFirstTime" }
+
+                var smooth = false
+
+                // retrieve task index
+                val taskId = navigationArguments.taskId.takeIf { it > -1L }
+                val taskIndex = taskId?.let { taskId ->
+                    listAdapter.getCurrentItems()
+                        .map { it.id }
+                        .indexOf(taskId.toString())
+                        .takeIf { it > -1 }
+                }
+
+                // fallback to Today item
+                val index = if (taskIndex == null) {
+                    smooth = true
+                    listAdapter.getCurrentItems()
+                        .map { it.id }
+                        .indexOf(Group.Today.name)
+                        .takeIf { it > -1 }
+                } else {
+                    taskIndex
+                }
+
+                // actual scroll
+                if (index != null) {
+                    scrollTo(index, smooth)
+                }
+
+                // show dialog if task id provided
+                if (taskId != null) {
+                    onTaskEditClicked(taskId)
+                }
+            }
+        }
+
+        lifecycle.coroutineScope.launchWhenResumed {
+            viewModel.scrollToday.collect {
+                logger.debug { "scrollToday" }
+                val index = listAdapter.getCurrentItems().map { it.id }.indexOf(Group.Today.name)
+                if (index > -1) {
+                    scrollTo(index, true)
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -178,21 +186,27 @@ class TaskListFragment : Fragment() {
         viewModel.forceListUpdate()
     }
 
-    private fun scrollTo(index: Int) {
-        logger.debug { "scrollTo: $index" }
+    private fun scrollTo(index: Int, smooth: Boolean) {
+        logger.debug { "scrollTo: index=$index smooth=$smooth" }
         if (index > -1) {
-            binding.taskList.layoutManager?.startSmoothScroll(
-                object : LinearSmoothScroller(context) {
-                    override fun getVerticalSnapPreference(): Int = SNAP_TO_START
-                }.apply {
-                    targetPosition = index
-                }
-            )
+            if (smooth) {
+                binding.taskList.layoutManager?.startSmoothScroll(
+                    object : LinearSmoothScroller(context) {
+                        override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+                    }.apply {
+                        targetPosition = index
+                    }
+                )
+            } else {
+                binding.taskList.layoutManager?.scrollToPosition(index)
+            }
         }
     }
 
-    private fun showTaskEditPopup(task: Task? = null) {
-        logger.debug { "showTaskEditPopup task=$task" }
-        TaskEditFragment.show(requireActivity().supportFragmentManager, task)
+    private fun onTaskEditClicked(taskId: Long? = null) {
+        logger.debug { "showTaskEditPopup #$taskId" }
+        findNavController(this).navigate(
+            TaskListFragmentDirections.actionTaskListFragmentToTaskEditFragment(taskId ?: -1L)
+        )
     }
 }

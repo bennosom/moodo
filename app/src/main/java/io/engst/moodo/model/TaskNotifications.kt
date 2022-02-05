@@ -12,6 +12,7 @@ import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.navigation.NavDeepLinkBuilder
 import io.engst.moodo.R
 import io.engst.moodo.headless.TaskActionReceiver
 import io.engst.moodo.model.types.Task
@@ -21,6 +22,7 @@ import io.engst.moodo.model.types.extraTaskId
 import io.engst.moodo.shared.Logger
 import io.engst.moodo.shared.msecsSinceEpoch
 import io.engst.moodo.ui.MainActivity
+import io.engst.moodo.ui.tasks.TaskListFragmentArgs
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -63,14 +65,12 @@ class TaskNotifications(
                 val taskId = it.id!!
                 val notificationId = (it.id % (Int.MAX_VALUE - 100)).toInt() + 100
 
-                val actionEdit = PendingIntent.getActivity(
-                    context,
-                    notificationId,
-                    Intent(context, MainActivity::class.java).apply {
-                        putExtra(extraTaskId, taskId)
-                    },
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
+                val actionEdit = NavDeepLinkBuilder(context)
+                    .setComponentName(MainActivity::class.java)
+                    .setGraph(R.navigation.nav_graph)
+                    .setDestination(R.id.taskListFragment)
+                    .setArguments(TaskListFragmentArgs(taskId).toBundle())
+                    .createPendingIntent()
 
                 val actionDone: NotificationCompat.Action = NotificationCompat.Action.Builder(
                     R.drawable.ic_done_24,

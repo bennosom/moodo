@@ -4,18 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
     app:startDestination="@id/taskListFragment">
+
     <fragment
         android:id="@+id/taskListFragment"
         android:name="io.engst.moodo.ui.tasks.TaskListFragment"
         android:label="Task list"
         tools:layout="@layout/fragment_task_list">
+        <argument
+            android:name="taskId"
+            android:defaultValue="-1L"
+            app:argType="long" />
         <action
             android:id="@+id/action_taskListFragment_to_taskEditFragment"
             app:destination="@id/taskEditFragment" />
     </fragment>
-    <fragment
+
+    <dialog
         android:id="@+id/taskEditFragment"
-        android:name="io.engst.moodo.ui.tasks.edit.TaskEditFragment"
+        android:name="io.engst.moodo.ui.tasks.edit.TaskEditDialogFragment"
         android:label="Edit task"
-        tools:layout="@layout/fragment_task_edit" />
+        tools:layout="@layout/fragment_task_edit">
+        <argument
+            android:name="taskId"
+            android:defaultValue="-1L"
+            app:argType="long" />
+    </dialog>
+
 </navigation>

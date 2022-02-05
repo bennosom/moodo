@@ -1,6 +1,7 @@
 package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
+import io.engst.moodo.model.persistence.TaskEntity
 import io.engst.moodo.model.persistence.TaskListOrderEntity
 import io.engst.moodo.model.persistence.toEntity
 import io.engst.moodo.model.types.DateShift
@@ -49,10 +50,13 @@ class TaskRepository(
         .onEach { logger.debug { "tasks=${it.map { it.id }}" } }
         .shareIn(GlobalScope, SharingStarted.Eagerly, 1)
 
-    fun getTask(id: Long): Task {
+    fun getTask(id: Long): Task? {
         return runBlocking(Dispatchers.IO) {
-            val entity = taskDao.getTaskById(id)
-            return@runBlocking taskFactory.createTask(entity)
+            val entity: TaskEntity? = taskDao.getTaskById(id)
+            val task: Task? = entity?.let {
+                taskFactory.createTask(it)
+            }
+            task
         }
     }
 
@@ -97,13 +101,14 @@ class TaskRepository(
                 else -> throw IllegalStateException("failed to shift task to $shiftTo")
             }
 
-            val task = taskDao.getTaskById(taskId)
-            taskDao.updateTask(
-                task.copy(
-                    dueDate = updatedDueDate,
-                    doneDate = null
+            taskDao.getTaskById(taskId)?.let { task ->
+                taskDao.updateTask(
+                    task.copy(
+                        dueDate = updatedDueDate,
+                        doneDate = null
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -111,36 +116,38 @@ class TaskRepository(
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "shiftBy taskId=$taskId shiftBy=$shiftBy" }
 
-            val task = taskDao.getTaskById(taskId)
-            val baseDate = when {
-                task.doneDate != null -> LocalDateTime.of(
-                    LocalDate.now(clock),
-                    task.dueDate!!.toLocalTime()
-                )
-                task.dueDate != null -> task.dueDate
-                else -> LocalDateTime.now(clock)
-            }
-            val updatedDueDate = when (shiftBy) {
-                DateShift.None -> baseDate
-                DateShift.OneDay -> baseDate.plusDays(1)
-                DateShift.TwoDays -> baseDate.plusDays(2)
-                DateShift.OneWeek -> baseDate.plusWeeks(1)
-            }
+            taskDao.getTaskById(taskId)?.let { task ->
+                val baseDate = when {
+                    task.doneDate != null -> LocalDateTime.of(
+                        LocalDate.now(clock),
+                        task.dueDate!!.toLocalTime()
+                    )
+                    task.dueDate != null -> task.dueDate
+                    else -> LocalDateTime.now(clock)
+                }
+                val updatedDueDate = when (shiftBy) {
+                    DateShift.None -> baseDate
+                    DateShift.OneDay -> baseDate.plusDays(1)
+                    DateShift.TwoDays -> baseDate.plusDays(2)
+                    DateShift.OneWeek -> baseDate.plusWeeks(1)
+                }
 
-            taskDao.updateTask(
-                task.copy(
-                    dueDate = updatedDueDate,
-                    doneDate = null
+                taskDao.updateTask(
+                    task.copy(
+                        dueDate = updatedDueDate,
+                        doneDate = null
+                    )
                 )
-            )
+            }
         }
     }
 
     fun setDone(taskId: Long) {
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "setDone taskId=$taskId" }
-            val task = taskDao.getTaskById(taskId)
-            taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
+            taskDao.getTaskById(taskId)?.let { task ->
+                taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
+            }
         }
     }
 

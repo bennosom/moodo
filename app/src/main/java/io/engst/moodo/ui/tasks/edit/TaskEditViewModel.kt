@@ -1,5 +1,7 @@
 package io.engst.moodo.ui.tasks.edit
 
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.lifecycle.ViewModel
 import io.engst.moodo.model.TaskRepository
 import io.engst.moodo.model.types.Task
@@ -15,6 +17,7 @@ import java.util.*
 
 class TaskEditViewModel(
     private val taskRepository: TaskRepository,
+    private val vibrator: Vibrator,
     val clock: Clock,
     val locale: Locale
 ) : ViewModel() {
@@ -36,6 +39,27 @@ class TaskEditViewModel(
     var dueDate: LocalDate? = null
     var dueTime: LocalTime? = null
 
+    fun init(id: Long) {
+        originalTask = taskRepository.getTask(id)
+    }
+
+    fun addTask() {
+        if (description.isBlank()) {
+            logger.error { "emtpy description, do nothing" }
+            return
+        }
+        val newTask = Task(
+            description = description,
+            createdDate = LocalDateTime.now(),
+            dueDate = buildDueDate(),
+            isDue = false,
+            priority = 0
+        )
+        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+        GlobalScope.launch { taskRepository.addTask(newTask) }
+    }
+
+
     fun deleteTask() {
         logger.info { "deleteTask" }
 
@@ -48,7 +72,18 @@ class TaskEditViewModel(
         }
     }
 
-    fun saveChanges() {
+    fun setTaskDone() {
+        originalTask?.let { original ->
+            val updatedTask = original.copy(
+                doneDate = LocalDateTime.now()
+            )
+            GlobalScope.launch { taskRepository.updateTask(updatedTask) }
+        } ?: Unit.let {
+            logger.error { "failed to set task to done: no task set" }
+        }
+    }
+
+    fun saveTask() {
         logger.info { "saveChanges" }
 
         val dueDateTime = buildDueDate()
@@ -58,7 +93,7 @@ class TaskEditViewModel(
                 logger.info { "delete task, because description has been removed" }
 
                 deleteTask()
-                return@saveChanges
+                return@saveTask
             }
 
             val updatedTask = original.copy(
@@ -104,30 +139,4 @@ class TaskEditViewModel(
         dueDate?.let {
             LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
         }
-
-    fun addNewTask() {
-        if (description.isBlank()) {
-            logger.error { "emtpy description, do nothing" }
-            return
-        }
-        val newTask = Task(
-            description = description,
-            createdDate = LocalDateTime.now(),
-            dueDate = buildDueDate(),
-            isDue = false,
-            priority = 0
-        )
-        GlobalScope.launch { taskRepository.addTask(newTask) }
-    }
-
-    fun setTaskDone() {
-        originalTask?.let { original ->
-            val updatedTask = original.copy(
-                doneDate = LocalDateTime.now()
-            )
-            GlobalScope.launch { taskRepository.updateTask(updatedTask) }
-        } ?: Unit.let {
-            logger.error { "failed to set task to done: no task set" }
-        }
-    }
 }
