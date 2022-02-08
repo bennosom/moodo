@@ -46,7 +46,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/description_text"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -66,7 +66,7 @@
 
         <Button
             android:id="@+id/button_delete"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -80,7 +80,7 @@
 
         <Button
             android:id="@+id/button_done"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -93,7 +93,7 @@
 
         <Button
             android:id="@+id/button_save"
-            style="@style/Widget.MaterialComponents.Button"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
