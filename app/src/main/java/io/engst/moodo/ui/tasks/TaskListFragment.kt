@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
-import androidx.navigation.fragment.NavHostFragment.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -205,7 +205,18 @@ class TaskListFragment : Fragment() {
 
     private fun onTaskEditClicked(taskId: Long? = null) {
         logger.debug { "showTaskEditPopup #$taskId" }
-        findNavController(this).navigate(
+        val navController =
+            activity?.supportFragmentManager?.findFragmentById(R.id.nav_host_fragment)
+                ?.findNavController()
+
+        /**
+         * Fix crash: java.lang.IllegalArgumentException: Navigation action/destination io.engst.moodo:id/action_taskListFragment_to_taskEditFragment cannot be found from the current destination Destination(io.engst.moodo:id/taskEditFragment) label=Edit task
+         *
+         * Occurs if very fast clicks happen on one list item (the second click leads to crash...)
+         */
+        navController?.navigateUp()
+
+        navController?.navigate(
             TaskListFragmentDirections.actionTaskListFragmentToTaskEditFragment(taskId ?: -1L)
         )
     }
