@@ -40,13 +40,13 @@ class TaskRepository(
         .onEach { logger.debug { "taskOrder=$it" } }
 
     val tasks: Flow<List<Task>> = taskDao.getTasks()
+        .flowOn(Dispatchers.IO)
+        .combine(forceTaskUpdate) { tasks, _ -> tasks }
         .map { taskFactory.createTaskList(it) }
         .combine(taskOrder) { tasks, order ->
             val orderById = order.withIndex().associate { it.value to it.index }
             tasks.sortedBy { orderById[it.id] }
         }
-        .flowOn(Dispatchers.IO)
-        .combine(forceTaskUpdate) { tasks, _ -> tasks }
         .onEach { logger.debug { "tasks=${it.map { it.id }}" } }
         .shareIn(GlobalScope, SharingStarted.Eagerly, 1)
 
