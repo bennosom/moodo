@@ -10,7 +10,8 @@ data class Task(
     var dueDate: LocalDateTime? = null,
     val isDue: Boolean,
     var doneDate: LocalDateTime? = null,
-    val priority: Int
+    val priority: Int,
+    val tags: List<Long> = emptyList()
 ) : Serializable {
     val isDone: Boolean
         get() = doneDate != null

@@ -8,7 +8,7 @@ val moduleModel = module {
     single { TaskDatabase.getInstance(get()).taskDao }
     single { TaskScheduler(getLogger<TaskScheduler>("scheduler"), get()) }
     single { TaskFactory(get()) }
-    single { TaskRepository(get(), get(), get(), get()) }
+    single { TaskRepository(get(), get(), get(), get(), get()) }
     single { TaskNotifications(getLogger<TaskNotifications>("notification"), get(), get()) }
     single { TagFactory() }
 }

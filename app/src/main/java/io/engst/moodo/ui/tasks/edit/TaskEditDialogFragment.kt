@@ -2,7 +2,6 @@ package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
 import android.view.*
@@ -10,6 +9,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -25,7 +25,6 @@ import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
 import io.engst.moodo.model.types.DateSuggestion
 import io.engst.moodo.model.types.Tag
-import io.engst.moodo.model.types.Task
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger

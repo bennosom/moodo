@@ -27,7 +27,7 @@ class TaskEditViewModel(
 
     private val logger: Logger by injectLogger("viewmodel")
 
-    val tags: LiveData<List<Tag>> = repository.tags.asLiveData()
+    val tags: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
 
     var originalTask: Task? = null
         set(value) {
@@ -146,7 +146,7 @@ class TaskEditViewModel(
 
     fun addTag(name: String, color: Int) {
         GlobalScope.launch {
-            repository.addTag(name, color)
+            taskRepository.addTag(name, color)
         }
     }
 }

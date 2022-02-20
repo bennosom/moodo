@@ -1,8 +1,7 @@
-package io.engst.moodo.model.persistence
+package io.engst.moodo.model.persistence.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import io.engst.moodo.model.types.Task
 import java.time.LocalDateTime
 
 @Entity(
@@ -14,18 +13,8 @@ data class TaskEntity(
     val createdDate: LocalDateTime,
     val dueDate: LocalDateTime?,
     val doneDate: LocalDateTime?,
+    val tags: String?,
     val redoCount: Int,
     val shiftCount: Int,
     val priority: Int?
-)
-
-fun Task.toEntity() = TaskEntity(
-    id = id,
-    description = description,
-    createdDate = createdDate,
-    dueDate = dueDate,
-    doneDate = doneDate,
-    redoCount = 0,
-    shiftCount = 0,
-    priority = priority
 )

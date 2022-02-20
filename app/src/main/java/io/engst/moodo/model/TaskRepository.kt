@@ -1,10 +1,7 @@
 package io.engst.moodo.model
 
-import io.engst.moodo.model.persistence.TagEntity
-import io.engst.moodo.model.persistence.TaskDao
-import io.engst.moodo.model.persistence.TaskEntity
-import io.engst.moodo.model.persistence.TaskListOrderEntity
-import io.engst.moodo.model.persistence.toEntity
+import io.engst.moodo.model.persistence.*
+import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Tag
 import io.engst.moodo.model.types.Task
@@ -37,7 +34,7 @@ class TaskRepository(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    private val taskOrder: Flow<List<Long>> = taskDao.getTaskOrder()
+    private val taskOrder: Flow<List<Long>> = taskDao.taskOrder()
         .flowOn(Dispatchers.IO)
         .map { taskListOrderEntity ->
             taskListOrderEntity?.let {
@@ -46,7 +43,12 @@ class TaskRepository(
         }
         .onEach { logger.debug { "taskOrder=$it" } }
 
-    val tasks: Flow<List<Task>> = taskDao.getTasks()
+    val tags: Flow<List<Tag>> = taskDao.tags()
+        .flowOn(Dispatchers.IO)
+        .map { tagFactory.createTagList(it) }
+        .onEach { logger.debug { "tags=$it" } }
+
+    val tasks: Flow<List<Task>> = taskDao.tasks()
         .flowOn(Dispatchers.IO)
         .combine(forceTaskUpdate) { tasks, _ -> tasks }
         .map { taskFactory.createTaskList(it) }
@@ -57,11 +59,6 @@ class TaskRepository(
         .onEach { logger.debug { "tasks=${it.map { it.id }}" } }
         .shareIn(GlobalScope, SharingStarted.Eagerly, 1)
 
-    val tags: Flow<List<Tag>> =
-        taskDao.getTags().map {
-            tagFactory.createTagList(it)
-        }.flowOn(Dispatchers.IO)
-    
     fun getTask(id: Long): Task? {
         return runBlocking(Dispatchers.IO) {
             val entity: TaskEntity? = taskDao.getTaskById(id)
@@ -105,11 +102,13 @@ class TaskRepository(
     suspend fun addTag(name: String, color: Int) {
         withContext(Dispatchers.IO) {
             logger.debug { "add tag $name $color" }
-            taskDao.addTag(TagEntity(
-                id = null,
-                name = name,
-                color = color
-            ))
+            taskDao.addTag(
+                TagEntity(
+                    id = null,
+                    name = name,
+                    color = color
+                )
+            )
         }
     }
 

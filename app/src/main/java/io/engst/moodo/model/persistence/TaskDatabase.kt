@@ -15,12 +15,16 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.engst.moodo.R
+import io.engst.moodo.model.persistence.entity.TagEntity
+import io.engst.moodo.model.persistence.entity.TaskEntity
+import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.ui.MainActivity
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
 
 const val LOG_TAG = "TaskDatabase"
 
@@ -85,7 +89,9 @@ abstract class TaskDatabase : RoomDatabase() {
                 db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
 
                 // add new column to tasks
-                db.execSQL("ALTER TABLE `task` ADD COLUMN tag TEXT")
+                db.execSQL("ALTER TABLE `task` ADD COLUMN `tags` TEXT")
+
+                db.execSQL("PRAGMA foreign_key_check(`task`)")
             }
         }
 
@@ -97,6 +103,11 @@ abstract class TaskDatabase : RoomDatabase() {
                             context.applicationContext,
                             TaskDatabase::class.java,
                             "moodoDb"
+                        ).setQueryCallback(
+                            { sqlQuery, _ ->
+                                Log.d(LOG_TAG, "queryCallback: $sqlQuery")
+                            },
+                            Executors.newFixedThreadPool(4)
                         )
                         .addMigrations(dbMigration1to2)
                         .addMigrations(dbMigration2to3)

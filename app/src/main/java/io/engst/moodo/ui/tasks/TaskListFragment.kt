@@ -139,8 +139,8 @@ class TaskListFragment : Fragment() {
                 var smooth = false
 
                 // retrieve task index
-                val taskId = navigationArguments.taskId.takeIf { it > -1L }
-                val taskIndex = taskId?.let { taskId ->
+                val id = navigationArguments.taskId.takeIf { it > -1L }
+                val taskIndex = id?.let { taskId ->
                     listAdapter.getCurrentItems()
                         .map { it.id }
                         .indexOf(taskId.toString())
@@ -164,8 +164,8 @@ class TaskListFragment : Fragment() {
                 }
 
                 // show dialog if task id provided
-                if (taskId != null) {
-                    onTaskEditClicked(taskId)
+                if (id != null) {
+                    onTaskEditClicked(id)
                 }
             }
         }

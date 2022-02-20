@@ -1,4 +1,4 @@
-package io.engst.moodo.model.persistence
+package io.engst.moodo.model.persistence.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
