@@ -36,7 +36,11 @@ class TaskRepository(
 
     private val taskOrder: Flow<List<Long>> = taskDao.getTaskOrder()
         .flowOn(Dispatchers.IO)
-        .map { Json.decodeFromString<List<Long>>(it.list_order) }
+        .map { taskListOrderEntity ->
+            taskListOrderEntity?.let {
+                Json.decodeFromString<List<Long>>(it.list_order)
+            } ?: emptyList()
+        }
         .onEach { logger.debug { "taskOrder=$it" } }
 
     val tasks: Flow<List<Task>> = taskDao.getTasks()

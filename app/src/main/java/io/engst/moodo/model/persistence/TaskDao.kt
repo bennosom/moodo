@@ -21,7 +21,7 @@ interface TaskDao {
     suspend fun deleteTask(vararg task: TaskEntity)
 
     @Query("SELECT * FROM task_list_order WHERE list_id == 0")
-    fun getTaskOrder(): Flow<TaskListOrderEntity>
+    fun getTaskOrder(): Flow<TaskListOrderEntity?>
 
     @Update
     suspend fun updateOrder(listOrderEntity: TaskListOrderEntity)
