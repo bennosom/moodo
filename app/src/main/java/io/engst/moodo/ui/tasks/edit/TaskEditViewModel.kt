@@ -27,7 +27,7 @@ class TaskEditViewModel(
 
     private val logger: Logger by injectLogger("viewmodel")
 
-    val tags: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
+    val availableTags: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
 
     var originalTask: Task? = null
         set(value) {
@@ -43,9 +43,12 @@ class TaskEditViewModel(
     var description: String = ""
     var dueDate: LocalDate? = null
     var dueTime: LocalTime? = null
+    val tags: MutableList<Tag> = mutableListOf()
 
     fun init(id: Long) {
-        originalTask = taskRepository.getTask(id)
+        if (id > -1L) {
+            originalTask = taskRepository.getTask(id)
+        }
     }
 
     fun addTask() {
@@ -103,7 +106,8 @@ class TaskEditViewModel(
 
             val updatedTask = original.copy(
                 description = description,
-                dueDate = dueDateTime
+                dueDate = dueDateTime,
+                tags = tags
             )
 
             // fix done date if due date has changed
@@ -122,7 +126,8 @@ class TaskEditViewModel(
                 createdDate = LocalDateTime.now(),
                 dueDate = dueDateTime,
                 isDue = false,
-                priority = 0
+                priority = 0,
+                tags = tags
             )
 
             if (hasDescriptionOrDueDateChanged()) {
@@ -145,8 +150,10 @@ class TaskEditViewModel(
         }
 
     fun addTag(name: String, color: Int) {
+        val tag = Tag(name = name, color = color)
         GlobalScope.launch {
-            taskRepository.addTag(name, color)
+            taskRepository.addTag(tag)
         }
+        tags += tag
     }
 }

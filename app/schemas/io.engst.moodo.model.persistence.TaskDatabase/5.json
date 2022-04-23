@@ -2,17 +2,17 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "10d56b5ef67f099592d1397793070d25",
+    "identityHash": "1b7c78b079659201a7438d85337aae6b",
     "entities": [
       {
         "tableName": "task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `description` TEXT NOT NULL, `createdDate` TEXT NOT NULL, `dueDate` TEXT, `doneDate` TEXT, `tags` TEXT, `redoCount` INTEGER NOT NULL, `shiftCount` INTEGER NOT NULL, `priority` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `description` TEXT NOT NULL, `createdDate` TEXT NOT NULL, `dueDate` TEXT, `doneDate` TEXT, `priority` INTEGER)",
         "fields": [
           {
-            "fieldPath": "id",
-            "columnName": "id",
+            "fieldPath": "task_id",
+            "columnName": "task_id",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "description",
@@ -39,24 +39,6 @@
             "notNull": false
           },
           {
-            "fieldPath": "tags",
-            "columnName": "tags",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "redoCount",
-            "columnName": "redoCount",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "shiftCount",
-            "columnName": "shiftCount",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "priority",
             "columnName": "priority",
             "affinity": "INTEGER",
@@ -65,7 +47,7 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "task_id"
           ],
           "autoGenerate": true
         },
@@ -100,11 +82,11 @@
       },
       {
         "tableName": "tag",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `color` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `color` TEXT NOT NULL)",
         "fields": [
           {
-            "fieldPath": "id",
-            "columnName": "id",
+            "fieldPath": "tag_id",
+            "columnName": "tag_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -117,24 +99,74 @@
           {
             "fieldPath": "color",
             "columnName": "color",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "tag_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ref_tag_task",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ref_tag_id` INTEGER NOT NULL, `ref_task_id` INTEGER NOT NULL, PRIMARY KEY(`ref_tag_id`, `ref_task_id`), FOREIGN KEY(`ref_tag_id`) REFERENCES `tag`(`tag_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`ref_task_id`) REFERENCES `task`(`task_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ref_tag_id",
+            "columnName": "ref_tag_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ref_task_id",
+            "columnName": "ref_task_id",
             "affinity": "INTEGER",
             "notNull": true
           }
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "ref_tag_id",
+            "ref_task_id"
           ],
-          "autoGenerate": true
+          "autoGenerate": false
         },
         "indices": [],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "tag",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "ref_tag_id"
+            ],
+            "referencedColumns": [
+              "tag_id"
+            ]
+          },
+          {
+            "table": "task",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "ref_task_id"
+            ],
+            "referencedColumns": [
+              "task_id"
+            ]
+          }
+        ]
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '10d56b5ef67f099592d1397793070d25')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1b7c78b079659201a7438d85337aae6b')"
     ]
   }
 }

@@ -11,14 +11,25 @@ interface TaskDao {
 
     // tasks
 
-    @Query("SELECT * FROM task JOIN tag ON task.id = tag.taskId")
-    fun tasksWithTags(): Map<TaskEntity, List<TagEntity>>
+    @Query(
+        """
+        SELECT * FROM task
+        LEFT JOIN ref_tag_task on ref_tag_task.ref_task_id == task.task_id
+        LEFT JOIN tag on ref_tag_task.ref_tag_id == tag.tag_id
+        ORDER BY date(dueDate) ASC
+    """
+    )
+    fun tasks(): Flow<Map<TaskEntity, List<TagEntity>>>
 
-    @Query("SELECT * FROM task ORDER BY date(dueDate) ASC")
-    fun tasks(): Flow<List<TaskEntity>>
-
-    @Query("SELECT * FROM task WHERE id == :id")
-    fun getTaskById(id: Long): TaskEntity?
+    @Query(
+        """
+        SELECT * FROM task
+        LEFT JOIN ref_tag_task on ref_tag_task.ref_task_id == task.task_id
+        LEFT JOIN tag on ref_tag_task.ref_tag_id == tag.tag_id
+        WHERE task_id == :id
+        """
+    )
+    fun getTask(id: Long): TaskEntity?
 
     @Insert
     suspend fun addTask(vararg task: TaskEntity): List<Long>
@@ -44,7 +55,7 @@ interface TaskDao {
     @Query("SELECT * FROM tag")
     fun tags(): Flow<List<TagEntity>>
 
-    @Query("SELECT * FROM tag WHERE id == :id")
+    @Query("SELECT * FROM tag WHERE tag_id == :id")
     fun getTag(id: Long): TagEntity?
 
     @Insert

@@ -83,6 +83,9 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
         binding = FragmentTaskEditBinding.inflate(inflater, container, false)
 
         updateDateChips()
+
+        viewModel.availableTags.observe(this) { updateTagChips(it) }
+
         initActions()
 
         return binding.root
@@ -166,22 +169,21 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
         binding.root.findViewById<ChipGroup>(R.id.tag_chips).run {
             removeAllViews()
             tags.forEach { tag ->
-                val chip =
-                    layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
+                val chip = layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
                 addView(chip.apply {
                     id = View.generateViewId()
                     text = tag.name
                     chipBackgroundColor = ColorStateList.valueOf(tag.color)
                     setOnClickListener {
+                        val checked = (it as Chip).isChecked
 
                     }
                 })
             }
-            val chip =
-                layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
+            val chip = layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
             addView(chip.apply {
                 id = View.generateViewId()
-                text = "Other"
+                text = "+"
                 setOnClickListener {
                     fun showDialog() {
                         val fragmentManager = requireActivity().supportFragmentManager
@@ -254,11 +256,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                     val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 
                     TimeSuggestion.values().forEach { suggestion ->
-                        val timeChip = layoutInflater.inflate(
-                            R.layout.task_edit_duedate_suggestion_chip,
-                            null,
-                            false
-                        ) as Chip
+                        val timeChip = layoutInflater.inflate(R.layout.task_edit_duedate_suggestion_chip, null, false) as Chip
                         addView(timeChip.apply {
                             id = suggestion.ordinal
                             text = when (suggestion) {
@@ -284,11 +282,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                 }
             } ?: Unit.let {
                 DateSuggestion.values().forEach { suggestion ->
-                    val dateChip = layoutInflater.inflate(
-                        R.layout.task_edit_duedate_suggestion_chip,
-                        null,
-                        false
-                    ) as Chip
+                    val dateChip = layoutInflater.inflate(R.layout.task_edit_duedate_suggestion_chip, null, false) as Chip
                     addView(dateChip.apply {
                         id = suggestion.ordinal
                         text = getString(suggestion.textId)

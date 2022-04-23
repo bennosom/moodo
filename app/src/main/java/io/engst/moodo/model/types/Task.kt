@@ -5,13 +5,13 @@ import java.time.LocalDateTime
 
 data class Task(
     val id: Long? = null,
-    var description: String = "",
+    var description: String,
     val createdDate: LocalDateTime,
     var dueDate: LocalDateTime? = null,
     val isDue: Boolean,
     var doneDate: LocalDateTime? = null,
     val priority: Int,
-    val tags: List<Long> = emptyList()
+    val tags: List<Tag> = emptyList()
 ) : Serializable {
     val isDone: Boolean
         get() = doneDate != null

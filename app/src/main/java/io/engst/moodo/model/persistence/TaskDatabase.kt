@@ -15,6 +15,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.engst.moodo.R
+import io.engst.moodo.model.persistence.entity.RefTagTaskEntity
 import io.engst.moodo.model.persistence.entity.TagEntity
 import io.engst.moodo.model.persistence.entity.TaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
@@ -33,7 +34,8 @@ const val LOG_TAG = "TaskDatabase"
     entities = [
         TaskEntity::class,
         TaskListOrderEntity::class,
-        TagEntity::class
+        TagEntity::class,
+        RefTagTaskEntity::class
     ]
 )
 @TypeConverters(TaskConverter::class)
@@ -80,18 +82,21 @@ abstract class TaskDatabase : RoomDatabase() {
 
         private val dbMigration4to5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // create new table
-                db.execSQL("CREATE TABLE IF NOT EXISTS `tag` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT NOT NULL, `color` TEXT NOT NULL)")
+                // create table: tag
+                db.execSQL("CREATE TABLE IF NOT EXISTS `tag` (`tag_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `color` TEXT NOT NULL)")
 
-                // add some tags
-                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(0, 'Moodo', '#80cbc4')")
-                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
-                db.execSQL("INSERT INTO `tag` (`id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
+                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(0, 'My Project', '#80cbc4')")
+                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
+                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
 
-                // add new column to tasks
-                db.execSQL("ALTER TABLE `task` ADD COLUMN `tags` TEXT")
+                // modify table: task
+                db.execSQL("CREATE TABLE IF NOT EXISTS `task-v5` (`task_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `description` TEXT NOT NULL, `createdDate` TEXT NOT NULL, `dueDate` TEXT, `doneDate` TEXT, `priority` INTEGER)")
+                db.execSQL("INSERT INTO `task-v5` (`task_id`,`description`,`createdDate`,`dueDate`,`doneDate`,`priority`) SELECT id, description, createdDate, dueDate, doneDate, priority FROM `task`")
+                db.execSQL("DROP TABLE `task`")
+                db.execSQL("ALTER TABLE `task-v5` RENAME TO `task`")
 
-                db.execSQL("PRAGMA foreign_key_check(`task`)")
+                // create table: ref_tag_task
+                db.execSQL("CREATE TABLE IF NOT EXISTS `ref_tag_task` (`ref_tag_id` INTEGER NOT NULL, `ref_task_id` INTEGER NOT NULL, PRIMARY KEY(`ref_tag_id`, `ref_task_id`), FOREIGN KEY(`ref_tag_id`) REFERENCES `tag`(`tag_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`ref_task_id`) REFERENCES `task`(`task_id`) ON UPDATE CASCADE ON DELETE CASCADE )")
             }
         }
 
@@ -103,12 +108,23 @@ abstract class TaskDatabase : RoomDatabase() {
                             context.applicationContext,
                             TaskDatabase::class.java,
                             "moodoDb"
-                        ).setQueryCallback(
+                        )
+                        .setQueryCallback(
                             { sqlQuery, _ ->
                                 Log.d(LOG_TAG, "queryCallback: $sqlQuery")
                             },
                             Executors.newFixedThreadPool(4)
                         )
+                        .addCallback(object : RoomDatabase.Callback() {
+                            override fun onCreate(db: SupportSQLiteDatabase) {
+                                // prepopulate some database contents on first run
+
+                                // add some default tags
+                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(0, 'My Project', '#80cbc4')")
+                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
+                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
+                            }
+                        })
                         .addMigrations(dbMigration1to2)
                         .addMigrations(dbMigration2to3)
                         .addMigrations(dbMigration3to4)

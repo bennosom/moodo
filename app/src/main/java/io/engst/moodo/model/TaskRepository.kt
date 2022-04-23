@@ -1,6 +1,7 @@
 package io.engst.moodo.model
 
-import io.engst.moodo.model.persistence.*
+import io.engst.moodo.model.persistence.TaskDao
+import io.engst.moodo.model.persistence.entity.TaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Tag
@@ -45,13 +46,20 @@ class TaskRepository(
 
     val tags: Flow<List<Tag>> = taskDao.tags()
         .flowOn(Dispatchers.IO)
-        .map { tagFactory.createTagList(it) }
+        .map { tagEntities ->
+            tagEntities.map { tagFactory.createTag(it) }
+        }
         .onEach { logger.debug { "tags=$it" } }
 
     val tasks: Flow<List<Task>> = taskDao.tasks()
         .flowOn(Dispatchers.IO)
         .combine(forceTaskUpdate) { tasks, _ -> tasks }
-        .map { taskFactory.createTaskList(it) }
+        .map { taskWithTags ->
+            taskWithTags.map { entry ->
+                val tags = entry.value.map { tagFactory.createTag(it) }
+                taskFactory.createTask(entry.key, tags)
+            }
+        }
         .combine(taskOrder) { tasks, order ->
             val orderById = order.withIndex().associate { it.value to it.index }
             tasks.sortedBy { orderById[it.id] }
@@ -61,9 +69,9 @@ class TaskRepository(
 
     fun getTask(id: Long): Task? {
         return runBlocking(Dispatchers.IO) {
-            val entity: TaskEntity? = taskDao.getTaskById(id)
+            val entity: TaskEntity? = taskDao.getTask(id)
             val task: Task? = entity?.let {
-                taskFactory.createTask(it)
+                taskFactory.createTask(it, emptyList()) // TODO: Join with Tags
             }
             task
         }
@@ -99,16 +107,10 @@ class TaskRepository(
         }
     }
 
-    suspend fun addTag(name: String, color: Int) {
+    suspend fun addTag(tag: Tag) {
         withContext(Dispatchers.IO) {
-            logger.debug { "add tag $name $color" }
-            taskDao.addTag(
-                TagEntity(
-                    id = null,
-                    name = name,
-                    color = color
-                )
-            )
+            logger.debug { "addTag tag=$tag" }
+            taskDao.addTag(tag.toEntity())
         }
     }
 
@@ -123,7 +125,7 @@ class TaskRepository(
                 else -> throw IllegalStateException("failed to shift task to $shiftTo")
             }
 
-            taskDao.getTaskById(taskId)?.let { task ->
+            taskDao.getTask(taskId)?.let { task ->
                 taskDao.updateTask(
                     task.copy(
                         dueDate = updatedDueDate,
@@ -138,7 +140,7 @@ class TaskRepository(
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "shiftBy taskId=$taskId shiftBy=$shiftBy" }
 
-            taskDao.getTaskById(taskId)?.let { task ->
+            taskDao.getTask(taskId)?.let { task ->
                 val baseDate = when {
                     task.doneDate != null -> LocalDateTime.of(
                         LocalDate.now(clock),
@@ -167,7 +169,7 @@ class TaskRepository(
     fun setDone(taskId: Long) {
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "setDone taskId=$taskId" }
-            taskDao.getTaskById(taskId)?.let { task ->
+            taskDao.getTask(taskId)?.let { task ->
                 taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
             }
         }
