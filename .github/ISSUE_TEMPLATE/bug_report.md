@@ -1,31 +1,29 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Create a bug report
 title: "[BUG]"
 labels: bug
 assignees: ''
-
 ---
 
 **Environment**
  - Device: [e.g. OnePlus 8T]
  - OS: [e.g. Android 11]
+ - Language: [e.g. German]
+ - Locale: [e.g. Germany/German]
+ - Timezone: [e.g. UTC+1]
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Steps to Reproduce**
+What steps are needed to reproduce the behavior?
 
 **Observed behavior**
-Describe the result or what you see.
+What is the result or what do you see?
 
 **Expected behavior**
-What have you expected to happen?
+What do you expect?
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+If applicable, add screenshots to help explain the bug.
 
 **Additional context**
-Add any other context about the problem here.
+Add any other context about the bug here.
