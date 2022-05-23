@@ -87,6 +87,8 @@ class TaskRepository(
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
             logger.debug { "updateTask task=$task" }
+            val tags = task.tags.map { it.toEntity() }.toTypedArray()
+            taskDao.addTag(*tags)
             taskDao.updateTask(task.toEntity())
         }
     }

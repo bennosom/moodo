@@ -2,15 +2,19 @@ package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
 import android.view.*
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import android.widget.TextView
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
-import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.fragment.navArgs
+import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -36,6 +40,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+
 
 inline fun View.afterMeasured(crossinline block: () -> Unit) {
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -83,9 +88,6 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
         binding = FragmentTaskEditBinding.inflate(inflater, container, false)
 
         updateDateChips()
-
-        viewModel.availableTags.observe(this) { updateTagChips(it) }
-
         initActions()
 
         return binding.root
@@ -93,6 +95,8 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        viewModel.tagsUsed.observe(this) { updateTagChips(it) }
 
         viewModel.originalTask?.let {
             binding.textDone.isVisible = it.isDone
@@ -115,6 +119,19 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
             }
             false
         }
+
+        binding.tagEdit.setOnEditorActionListener(TextView.OnEditorActionListener { textView, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val text = textView.text.toString()
+                if (text.isNotBlank()) {
+                    val tag = Tag(null, text, Color.MAGENTA)
+                    viewModel.addTag(tag)
+                    textView.text = ""
+                }
+                return@OnEditorActionListener true
+            }
+            false
+        })
 
         requireContext().getSystemService(InputMethodManager::class.java)?.run {
             showSoftInput(
@@ -166,47 +183,21 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun updateTagChips(tags: List<Tag>) {
-        binding.root.findViewById<ChipGroup>(R.id.tag_chips).run {
-            removeAllViews()
+        binding.root.findViewById<FlexboxLayout>(R.id.tag_chip_layout).run {
+            children.onEachIndexed { index, view ->
+                if (view.id != R.id.tag_edit) {
+                    removeViewAt(index)
+                }
+            }
             tags.forEach { tag ->
                 val chip = layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
-                addView(chip.apply {
-                    id = View.generateViewId()
+                chip.apply {
                     text = tag.name
                     chipBackgroundColor = ColorStateList.valueOf(tag.color)
-                    setOnClickListener {
-                        val checked = (it as Chip).isChecked
-
-                    }
-                })
-            }
-            val chip = layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
-            addView(chip.apply {
-                id = View.generateViewId()
-                text = "+"
-                setOnClickListener {
-                    fun showDialog() {
-                        val fragmentManager = requireActivity().supportFragmentManager
-                        val newFragment = CustomDialogFragment()
-                        if (false /*isLargeDisplay*/) {
-                            // The device is using a large layout, so show the fragment as a dialog
-                            newFragment.show(fragmentManager, "dialog")
-                        } else {
-                            // The device is smaller, so show the fragment fullscreen
-                            val transaction = fragmentManager.beginTransaction()
-                            // For a little polish, specify a transition animation
-                            transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                            // To make it fullscreen, use the 'content' root view as the container
-                            // for the fragment, which is always the root view for the activity
-                            transaction
-                                .add(android.R.id.content, newFragment)
-                                .addToBackStack(null)
-                                .commit()
-                        }
-                    }
-                    showDialog()
+                    setOnCloseIconClickListener { viewModel.removeTag(tag) }
                 }
-            })
+                addView(chip as View, binding.tagChipLayout.childCount - 1)
+            }
         }
     }
 

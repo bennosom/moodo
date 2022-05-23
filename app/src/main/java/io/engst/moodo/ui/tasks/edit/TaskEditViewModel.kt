@@ -3,6 +3,7 @@ package io.engst.moodo.ui.tasks.edit
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import io.engst.moodo.model.TaskRepository
@@ -27,7 +28,10 @@ class TaskEditViewModel(
 
     private val logger: Logger by injectLogger("viewmodel")
 
-    val availableTags: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
+    private val tags: MutableLiveData<List<Tag>> = MutableLiveData()
+
+    val tagsAvailable: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
+    val tagsUsed: LiveData<List<Tag>> = tags
 
     var originalTask: Task? = null
         set(value) {
@@ -43,11 +47,11 @@ class TaskEditViewModel(
     var description: String = ""
     var dueDate: LocalDate? = null
     var dueTime: LocalTime? = null
-    val tags: MutableList<Tag> = mutableListOf()
 
     fun init(id: Long) {
         if (id > -1L) {
             originalTask = taskRepository.getTask(id)
+            tags.value = originalTask?.tags ?: emptyList()
         }
     }
 
@@ -107,7 +111,7 @@ class TaskEditViewModel(
             val updatedTask = original.copy(
                 description = description,
                 dueDate = dueDateTime,
-                tags = tags
+                tags = tags.value ?: emptyList()
             )
 
             // fix done date if due date has changed
@@ -115,11 +119,7 @@ class TaskEditViewModel(
                 updatedTask.doneDate = null
             }
 
-            if (hasDescriptionOrDueDateChanged()) {
-                GlobalScope.launch { taskRepository.updateTask(updatedTask) }
-            } else {
-                logger.info { "nothing changed" }
-            }
+            GlobalScope.launch { taskRepository.updateTask(updatedTask) }
         } ?: Unit.let {
             val newTask = Task(
                 description = description,
@@ -127,14 +127,10 @@ class TaskEditViewModel(
                 dueDate = dueDateTime,
                 isDue = false,
                 priority = 0,
-                tags = tags
+                tags = tags.value ?: emptyList()
             )
 
-            if (hasDescriptionOrDueDateChanged()) {
-                GlobalScope.launch { taskRepository.addTask(newTask) }
-            } else {
-                logger.info { "nothing changed" }
-            }
+            GlobalScope.launch { taskRepository.addTask(newTask) }
         }
     }
 
@@ -149,11 +145,11 @@ class TaskEditViewModel(
             LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
         }
 
-    fun addTag(name: String, color: Int) {
-        val tag = Tag(name = name, color = color)
-        GlobalScope.launch {
-            taskRepository.addTag(tag)
-        }
-        tags += tag
+    fun addTag(tag: Tag) {
+        tags.value = tags.value?.plus(tag)
+    }
+
+    fun removeTag(tag: Tag) {
+        tags.value = tags.value?.minus(tag)
     }
 }

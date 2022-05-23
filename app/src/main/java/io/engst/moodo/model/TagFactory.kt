@@ -18,7 +18,6 @@ fun Tag.toEntity() = TagEntity(
     color = fromColor(color) ?: "#ff000000"
 )
 
-
 fun toColor(colorString: String?): Int? =
     colorString?.let { Color.parseColor(it) }
 

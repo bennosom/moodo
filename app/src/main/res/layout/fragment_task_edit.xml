@@ -25,24 +25,28 @@
         tools:text="@string/task_done_at"
         tools:visibility="visible" />
 
-    <HorizontalScrollView
-        android:layout_width="wrap_content"
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/tag_chip_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:fadingEdge="horizontal"
-        android:fadingEdgeLength="10dp"
-        android:requiresFadingEdge="horizontal"
-        android:scrollbars="none">
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="8dp"
+        app:alignContent="space_around"
+        app:alignItems="stretch"
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/tag_chips"
+        app:flexWrap="wrap"
+        app:showDivider="beginning|middle|end">
+
+        <EditText
+            android:id="@+id/tag_edit"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:selectionRequired="false"
-            app:singleLine="true"
-            app:singleSelection="false" />
-    </HorizontalScrollView>
+            android:layout_height="32dp"
+            android:background="@android:color/transparent"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            app:layout_flexGrow="1" />
+
+    </com.google.android.flexbox.FlexboxLayout>
 
     <HorizontalScrollView
         android:layout_width="wrap_content"
