@@ -12,7 +12,7 @@ data class TagEntity(
 )
 
 @Entity(
-    tableName = "ref_tag_task",
+    tableName = "tag_task",
     primaryKeys = ["ref_tag_id", "ref_task_id"],
     foreignKeys = [
         ForeignKey(
@@ -31,7 +31,7 @@ data class TagEntity(
         )
     ]
 )
-data class RefTagTaskEntity(
+data class TagTaskEntity(
     val ref_tag_id: Long,
     val ref_task_id: Long
 )

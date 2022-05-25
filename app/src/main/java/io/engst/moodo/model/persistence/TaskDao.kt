@@ -2,6 +2,7 @@ package io.engst.moodo.model.persistence
 
 import androidx.room.*
 import io.engst.moodo.model.persistence.entity.TagEntity
+import io.engst.moodo.model.persistence.entity.TagTaskEntity
 import io.engst.moodo.model.persistence.entity.TaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import kotlinx.coroutines.flow.Flow
@@ -14,8 +15,8 @@ interface TaskDao {
     @Query(
         """
         SELECT * FROM task
-        LEFT JOIN ref_tag_task on ref_tag_task.ref_task_id == task.task_id
-        LEFT JOIN tag on ref_tag_task.ref_tag_id == tag.tag_id
+        LEFT JOIN tag_task on tag_task.ref_task_id == task.task_id
+        LEFT JOIN tag on tag_task.ref_tag_id == tag.tag_id
         ORDER BY date(dueDate) ASC
     """
     )
@@ -24,21 +25,21 @@ interface TaskDao {
     @Query(
         """
         SELECT * FROM task
-        LEFT JOIN ref_tag_task on ref_tag_task.ref_task_id == task.task_id
-        LEFT JOIN tag on ref_tag_task.ref_tag_id == tag.tag_id
+        LEFT JOIN tag_task on tag_task.ref_task_id == task.task_id
+        LEFT JOIN tag on tag_task.ref_tag_id == tag.tag_id
         WHERE task_id == :id
         """
     )
-    fun getTask(id: Long): TaskEntity?
+    fun getTask(id: Long): Map<TaskEntity, List<TagEntity>>
 
     @Insert
-    suspend fun addTask(vararg task: TaskEntity): List<Long>
+    suspend fun addTask(vararg entity: TaskEntity): List<Long>
 
     @Update
-    suspend fun updateTask(vararg task: TaskEntity)
+    suspend fun updateTask(vararg entity: TaskEntity)
 
     @Delete
-    suspend fun deleteTask(vararg task: TaskEntity)
+    suspend fun deleteTask(vararg entity: TaskEntity)
 
 
     // task order
@@ -47,7 +48,7 @@ interface TaskDao {
     fun taskOrder(): Flow<TaskListOrderEntity?>
 
     @Update
-    suspend fun updateOrder(listOrderEntity: TaskListOrderEntity)
+    suspend fun updateOrder(entity: TaskListOrderEntity)
 
 
     // tags
@@ -59,11 +60,22 @@ interface TaskDao {
     fun getTag(id: Long): TagEntity?
 
     @Insert
-    suspend fun addTag(vararg tag: TagEntity): List<Long>
+    suspend fun addTag(vararg entity: TagEntity): List<Long>
 
     @Update
-    suspend fun updateTag(vararg tag: TagEntity)
+    suspend fun updateTag(vararg entity: TagEntity)
 
     @Delete
-    suspend fun deleteTag(vararg tag: TagEntity)
+    suspend fun deleteTag(vararg entity: TagEntity)
+
+    // tag/task references
+
+    @Query("SELECT * FROM tag_task WHERE ref_task_id == :taskId")
+    suspend fun getAssociatedTags(taskId: Long): List<TagTaskEntity>
+
+    @Insert
+    suspend fun addTagTask(vararg entity: TagTaskEntity)
+
+    @Delete
+    suspend fun deleteTagTask(vararg entity: TagTaskEntity)
 }

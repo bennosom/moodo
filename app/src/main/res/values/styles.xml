@@ -18,6 +18,12 @@
         <item name="toolbarNavigationButtonStyle">@style/CustomToolbarNavigationButtonStyle</item>
     </style>
 
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">?android:attr/listDivider</item>
+    </style>
+
     <style name="CustomToolbarStyle" parent="Widget.MaterialComponents.Toolbar.Surface">
         <item name="colorSurface">@color/toolBarBackground</item>
     </style>

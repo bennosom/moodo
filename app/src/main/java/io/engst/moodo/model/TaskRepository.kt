@@ -1,7 +1,7 @@
 package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
-import io.engst.moodo.model.persistence.entity.TaskEntity
+import io.engst.moodo.model.persistence.entity.TagTaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Tag
@@ -64,15 +64,15 @@ class TaskRepository(
             val orderById = order.withIndex().associate { it.value to it.index }
             tasks.sortedBy { orderById[it.id] }
         }
-        .onEach { logger.debug { "tasks=${it.map { it.id }}" } }
+        .onEach { logger.debug { "tasks=$it" } }
         .shareIn(GlobalScope, SharingStarted.Eagerly, 1)
 
     fun getTask(id: Long): Task? {
         return runBlocking(Dispatchers.IO) {
-            val entity: TaskEntity? = taskDao.getTask(id)
-            val task: Task? = entity?.let {
-                taskFactory.createTask(it, emptyList()) // TODO: Join with Tags
-            }
+            val result = taskDao.getTask(id)
+            val (taskEntity, tagEntities) = result.entries.first().toPair()
+            val tags = tagEntities.map { tagFactory.createTag(it) }
+            val task = taskEntity.let { taskFactory.createTask(it, tags) }
             task
         }
     }
@@ -80,16 +80,39 @@ class TaskRepository(
     suspend fun addTask(task: Task) {
         withContext(Dispatchers.IO) {
             logger.debug { "addTask task=$task" }
-            taskDao.addTask(task.toEntity())
+
+            val taskEntity = task.toEntity()
+
+            val tagEntities = task.tags.map { it.toEntity() }.toTypedArray()
+            val tagIds = taskDao.addTag(*tagEntities)
+
+            val refEntities = tagIds.map { TagTaskEntity(it, taskEntity.task_id) }.toTypedArray()
+            taskDao.addTagTask(*refEntities)
+
+            taskDao.addTask(taskEntity)
         }
     }
 
     suspend fun updateTask(task: Task) {
         withContext(Dispatchers.IO) {
             logger.debug { "updateTask task=$task" }
-            val tags = task.tags.map { it.toEntity() }.toTypedArray()
-            taskDao.addTag(*tags)
-            taskDao.updateTask(task.toEntity())
+
+            val taskEntity = task.toEntity()
+
+            val oldTagTaskEntities = taskDao.getAssociatedTags(taskEntity.task_id).toTypedArray()
+            taskDao.deleteTagTask(*oldTagTaskEntities)
+
+            val tagEntities = task.tags.map {
+                it.toEntity().run {
+                    copy(tag_id = 0) // avoids SQLiteConstraintException: UNIQUE constraint failed: tag.tag_id
+                }
+            }.toTypedArray()
+            val tagIds = taskDao.addTag(*tagEntities)
+
+            val tagTaskEntities = tagIds.map { TagTaskEntity(it, taskEntity.task_id) }.toTypedArray()
+            taskDao.addTagTask(*tagTaskEntities)
+
+            taskDao.updateTask(taskEntity)
         }
     }
 
@@ -109,13 +132,6 @@ class TaskRepository(
         }
     }
 
-    suspend fun addTag(tag: Tag) {
-        withContext(Dispatchers.IO) {
-            logger.debug { "addTag tag=$tag" }
-            taskDao.addTag(tag.toEntity())
-        }
-    }
-
     fun shiftTo(taskId: Long, shiftTo: TaskAction) {
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "shiftTo taskId=$taskId shiftTo=$shiftTo" }
@@ -127,7 +143,10 @@ class TaskRepository(
                 else -> throw IllegalStateException("failed to shift task to $shiftTo")
             }
 
-            taskDao.getTask(taskId)?.let { task ->
+            taskDao.getTask(taskId).let {
+                assert(it.size <= 1)
+                val entry = it.entries.first()
+                val task = entry.key
                 taskDao.updateTask(
                     task.copy(
                         dueDate = updatedDueDate,
@@ -142,7 +161,10 @@ class TaskRepository(
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "shiftBy taskId=$taskId shiftBy=$shiftBy" }
 
-            taskDao.getTask(taskId)?.let { task ->
+            taskDao.getTask(taskId).let {
+                assert(it.size <= 1)
+                val entry = it.entries.first()
+                val task = entry.key
                 val baseDate = when {
                     task.doneDate != null -> LocalDateTime.of(
                         LocalDate.now(clock),
@@ -171,7 +193,10 @@ class TaskRepository(
     fun setDone(taskId: Long) {
         GlobalScope.launch(Dispatchers.IO) {
             logger.debug { "setDone taskId=$taskId" }
-            taskDao.getTask(taskId)?.let { task ->
+            taskDao.getTask(taskId).let {
+                assert(it.size <= 1)
+                val entry = it.entries.first()
+                val task = entry.key
                 taskDao.updateTask(task.copy(doneDate = LocalDateTime.now()))
             }
         }

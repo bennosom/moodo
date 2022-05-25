@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "1b7c78b079659201a7438d85337aae6b",
+    "identityHash": "8114a23e951b67ab1bbce78b1bc809da",
     "entities": [
       {
         "tableName": "task",
@@ -113,7 +113,7 @@
         "foreignKeys": []
       },
       {
-        "tableName": "ref_tag_task",
+        "tableName": "tag_task",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ref_tag_id` INTEGER NOT NULL, `ref_task_id` INTEGER NOT NULL, PRIMARY KEY(`ref_tag_id`, `ref_task_id`), FOREIGN KEY(`ref_tag_id`) REFERENCES `tag`(`tag_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`ref_task_id`) REFERENCES `task`(`task_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
@@ -166,7 +166,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1b7c78b079659201a7438d85337aae6b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8114a23e951b67ab1bbce78b1bc809da')"
     ]
   }
 }

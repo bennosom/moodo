@@ -10,7 +10,6 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.navigation.fragment.navArgs
@@ -124,7 +123,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val text = textView.text.toString()
                 if (text.isNotBlank()) {
-                    val tag = Tag(null, text, Color.MAGENTA)
+                    val tag = Tag(null, text, Color.LTGRAY)
                     viewModel.addTag(tag)
                     textView.text = ""
                 }
@@ -157,10 +156,10 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                 text = getString(R.string.task_button_add)
                 setOnClickListener {
                     viewModel.addTask()
-                    viewModel.description = ""
-                    viewModel.dueDate = null
-                    viewModel.dueTime = null
+                    viewModel.clear()
+                    // TODO: ui should observe data with livedata!!!
                     binding.descriptionText.editText?.setText(viewModel.description)
+                    // TODO: ui should observe data with livedata!!!
                     updateDateChips()
                 }
             }
@@ -184,9 +183,10 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
 
     private fun updateTagChips(tags: List<Tag>) {
         binding.root.findViewById<FlexboxLayout>(R.id.tag_chip_layout).run {
-            children.onEachIndexed { index, view ->
-                if (view.id != R.id.tag_edit) {
-                    removeViewAt(index)
+            for (i in childCount - 1 downTo 0) {
+                val childView = getChildAt(i)
+                if (childView.id != R.id.tag_edit) {
+                    removeViewAt(i)
                 }
             }
             tags.forEach { tag ->
@@ -218,6 +218,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                     text = dueDate.prettyFormat
                     isCheckable = false
                     setOnCloseIconClickListener {
+                        // TODO: ui should observe data with livedata!!!
                         viewModel.dueDate = null
                         viewModel.dueTime = null
                         updateDateChips()
@@ -237,6 +238,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                         text = dueTime.prettyFormat
                         isCheckable = false
                         setOnCloseIconClickListener {
+                            // TODO: ui should observe data with livedata!!!
                             viewModel.dueTime = null
                             viewModel.dueDate = null
                             updateDateChips()
@@ -264,6 +266,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                                 }
                             } else {
                                 setOnClickListener {
+                                    // TODO: ui should observe data with livedata!!!
                                     viewModel.dueTime = getSuggestedTime(suggestion)
                                     updateDateChips()
                                 }
@@ -285,6 +288,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                             }
                         } else {
                             setOnClickListener {
+                                // TODO: ui should observe data with livedata!!!
                                 viewModel.dueDate = getSuggestedDate(suggestion, helper)
 
                                 // don't ask for time for dates not being today or tomorrow

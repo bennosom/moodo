@@ -15,8 +15,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.engst.moodo.R
-import io.engst.moodo.model.persistence.entity.RefTagTaskEntity
 import io.engst.moodo.model.persistence.entity.TagEntity
+import io.engst.moodo.model.persistence.entity.TagTaskEntity
 import io.engst.moodo.model.persistence.entity.TaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.ui.MainActivity
@@ -35,7 +35,7 @@ const val LOG_TAG = "TaskDatabase"
         TaskEntity::class,
         TaskListOrderEntity::class,
         TagEntity::class,
-        RefTagTaskEntity::class
+        TagTaskEntity::class
     ]
 )
 @TypeConverters(TaskConverter::class)
@@ -85,9 +85,7 @@ abstract class TaskDatabase : RoomDatabase() {
                 // create table: tag
                 db.execSQL("CREATE TABLE IF NOT EXISTS `tag` (`tag_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `color` TEXT NOT NULL)")
 
-                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(0, 'My Project', '#80cbc4')")
-                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
-                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
+                db.addDefaultTags()
 
                 // modify table: task
                 db.execSQL("CREATE TABLE IF NOT EXISTS `task-v5` (`task_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `description` TEXT NOT NULL, `createdDate` TEXT NOT NULL, `dueDate` TEXT, `doneDate` TEXT, `priority` INTEGER)")
@@ -95,9 +93,15 @@ abstract class TaskDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE `task`")
                 db.execSQL("ALTER TABLE `task-v5` RENAME TO `task`")
 
-                // create table: ref_tag_task
-                db.execSQL("CREATE TABLE IF NOT EXISTS `ref_tag_task` (`ref_tag_id` INTEGER NOT NULL, `ref_task_id` INTEGER NOT NULL, PRIMARY KEY(`ref_tag_id`, `ref_task_id`), FOREIGN KEY(`ref_tag_id`) REFERENCES `tag`(`tag_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`ref_task_id`) REFERENCES `task`(`task_id`) ON UPDATE CASCADE ON DELETE CASCADE )")
+                // create table: tag_task
+                db.execSQL("CREATE TABLE IF NOT EXISTS `tag_task` (`ref_tag_id` INTEGER NOT NULL, `ref_task_id` INTEGER NOT NULL, PRIMARY KEY(`ref_tag_id`, `ref_task_id`), FOREIGN KEY(`ref_tag_id`) REFERENCES `tag`(`tag_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`ref_task_id`) REFERENCES `task`(`task_id`) ON UPDATE CASCADE ON DELETE CASCADE )")
             }
+        }
+
+        private fun SupportSQLiteDatabase.addDefaultTags() {
+            execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(0, 'My Project', '#80cbc4')")
+            execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
+            execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
         }
 
         fun getInstance(context: Context): TaskDatabase {
@@ -118,11 +122,7 @@ abstract class TaskDatabase : RoomDatabase() {
                         .addCallback(object : RoomDatabase.Callback() {
                             override fun onCreate(db: SupportSQLiteDatabase) {
                                 // prepopulate some database contents on first run
-
-                                // add some default tags
-                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(0, 'My Project', '#80cbc4')")
-                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(1, 'Family', '#b39ddb')")
-                                db.execSQL("INSERT INTO `tag` (`tag_id`,`name`,`color`) VALUES(2, 'Work', '#ffe082')")
+                                db.addDefaultTags()
                             }
                         })
                         .addMigrations(dbMigration1to2)

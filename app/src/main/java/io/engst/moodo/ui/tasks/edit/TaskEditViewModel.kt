@@ -28,7 +28,7 @@ class TaskEditViewModel(
 
     private val logger: Logger by injectLogger("viewmodel")
 
-    private val tags: MutableLiveData<List<Tag>> = MutableLiveData()
+    private val tags: MutableLiveData<List<Tag>> = MutableLiveData(emptyList())
 
     val tagsAvailable: LiveData<List<Tag>> = taskRepository.tags.asLiveData()
     val tagsUsed: LiveData<List<Tag>> = tags
@@ -134,17 +134,6 @@ class TaskEditViewModel(
         }
     }
 
-    private fun hasDescriptionOrDueDateChanged(): Boolean =
-        originalTask?.let {
-            it.description != description ||
-                    it.dueDate != buildDueDate()
-        } ?: true
-
-    private fun buildDueDate(): LocalDateTime? =
-        dueDate?.let {
-            LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
-        }
-
     fun addTag(tag: Tag) {
         tags.value = tags.value?.plus(tag)
     }
@@ -152,4 +141,15 @@ class TaskEditViewModel(
     fun removeTag(tag: Tag) {
         tags.value = tags.value?.minus(tag)
     }
+
+    fun clear() {
+        description = ""
+        dueDate = null
+        dueTime = null
+    }
+
+    private fun buildDueDate(): LocalDateTime? =
+        dueDate?.let {
+            LocalDateTime.of(dueDate, dueTime ?: LocalTime.of(9, 0))
+        }
 }
