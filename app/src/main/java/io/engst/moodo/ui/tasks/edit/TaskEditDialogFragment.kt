@@ -1,19 +1,17 @@
 package io.engst.moodo.ui.tasks.edit
 
 import android.app.Dialog
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
-import android.view.*
-import android.view.inputmethod.EditorInfo
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.navigation.fragment.navArgs
-import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -27,7 +25,6 @@ import com.google.android.material.timepicker.TimeFormat
 import io.engst.moodo.R
 import io.engst.moodo.databinding.FragmentTaskEditBinding
 import io.engst.moodo.model.types.DateSuggestion
-import io.engst.moodo.model.types.Tag
 import io.engst.moodo.model.types.TimeSuggestion
 import io.engst.moodo.model.types.textId
 import io.engst.moodo.shared.Logger
@@ -39,18 +36,6 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-
-
-inline fun View.afterMeasured(crossinline block: () -> Unit) {
-    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-        override fun onGlobalLayout() {
-            if (measuredWidth > 0 && measuredHeight > 0) {
-                viewTreeObserver.removeOnGlobalLayoutListener(this)
-                block()
-            }
-        }
-    })
-}
 
 class TaskEditDialogFragment : BottomSheetDialogFragment() {
 
@@ -95,19 +80,25 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.tagsUsed.observe(this) { updateTagChips(it) }
+        binding.autoCompleteChipGroup.setOnTagsChanged { viewModel.setTags(it) }
+        viewModel.tagsAvailable.observe(this) {
+            binding.autoCompleteChipGroup.setAvailableTags(it)
+        }
+        viewModel.tagsUsed.observe(this) { tags ->
+            binding.autoCompleteChipGroup.setCurrentTags(tags)
+        }
 
         viewModel.originalTask?.let {
             binding.textDone.isVisible = it.isDone
             binding.textDone.text = getString(R.string.task_done_at, it.doneDate?.prettyFormat)
         }
 
-        binding.descriptionText.editText?.setText(viewModel.description)
-        binding.descriptionText.editText?.doOnTextChanged { text, _, _, _ ->
+        binding.descriptionText.setText(viewModel.description)
+        binding.descriptionText.doOnTextChanged { text, _, _, _ ->
             viewModel.description = text.toString()
         }
-        binding.descriptionText.editText?.requestFocus()
-        binding.descriptionText.editText?.setOnTouchListener { editTextView, event ->
+        binding.descriptionText.requestFocus()
+        binding.descriptionText.setOnTouchListener { editTextView, event ->
             if (editTextView.hasFocus()) {
                 editTextView.parent.requestDisallowInterceptTouchEvent(true)
                 when (event.actionMasked) {
@@ -119,22 +110,9 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
             false
         }
 
-        binding.tagEdit.setOnEditorActionListener(TextView.OnEditorActionListener { textView, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                val text = textView.text.toString()
-                if (text.isNotBlank()) {
-                    val tag = Tag(null, text, Color.LTGRAY)
-                    viewModel.addTag(tag)
-                    textView.text = ""
-                }
-                return@OnEditorActionListener true
-            }
-            false
-        })
-
         requireContext().getSystemService(InputMethodManager::class.java)?.run {
             showSoftInput(
-                binding.descriptionText.editText,
+                binding.descriptionText,
                 InputMethodManager.SHOW_IMPLICIT
             )
         }
@@ -158,7 +136,7 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
                     viewModel.addTask()
                     viewModel.clear()
                     // TODO: ui should observe data with livedata!!!
-                    binding.descriptionText.editText?.setText(viewModel.description)
+                    binding.descriptionText.setText(viewModel.description)
                     // TODO: ui should observe data with livedata!!!
                     updateDateChips()
                 }
@@ -177,26 +155,6 @@ class TaskEditDialogFragment : BottomSheetDialogFragment() {
             binding.buttonSave.setOnClickListener {
                 viewModel.saveTask()
                 dismiss()
-            }
-        }
-    }
-
-    private fun updateTagChips(tags: List<Tag>) {
-        binding.root.findViewById<FlexboxLayout>(R.id.tag_chip_layout).run {
-            for (i in childCount - 1 downTo 0) {
-                val childView = getChildAt(i)
-                if (childView.id != R.id.tag_edit) {
-                    removeViewAt(i)
-                }
-            }
-            tags.forEach { tag ->
-                val chip = layoutInflater.inflate(R.layout.task_edit_tag_chip, null, false) as Chip
-                chip.apply {
-                    text = tag.name
-                    chipBackgroundColor = ColorStateList.valueOf(tag.color)
-                    setOnCloseIconClickListener { viewModel.removeTag(tag) }
-                }
-                addView(chip as View, binding.tagChipLayout.childCount - 1)
             }
         }
     }

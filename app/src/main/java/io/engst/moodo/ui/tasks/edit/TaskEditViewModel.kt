@@ -134,12 +134,8 @@ class TaskEditViewModel(
         }
     }
 
-    fun addTag(tag: Tag) {
-        tags.value = tags.value?.plus(tag)
-    }
-
-    fun removeTag(tag: Tag) {
-        tags.value = tags.value?.minus(tag)
+    fun setTags(tags: List<Tag>) {
+        this.tags.value = tags
     }
 
     fun clear() {

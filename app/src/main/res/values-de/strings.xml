@@ -33,7 +33,7 @@
     <string name="next_week">Nächste Woche</string>
     <string name="later">Später</string>
 
-    <string name="task_input_description">Aufgabe</string>
+    <string name="task_input_description">Hier deine Aufgabe...</string>
     <string name="task_button_delete">Löschen</string>
     <string name="task_button_cancel">Abbrechen</string>
     <string name="task_button_add">Hinzufügen</string>
@@ -55,4 +55,5 @@
     <string name="task_button_done">Erledigt</string>
     <string name="backlog">Irgendwann</string>
     <string name="today_nothing_todo">Prima, alles erledigt für heute!</string>
+    <string name="task_tag_input_hint">Tippe und füge Tags hinzu</string>
 </resources>
