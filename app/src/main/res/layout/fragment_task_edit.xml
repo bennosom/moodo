@@ -63,13 +63,13 @@
         android:id="@+id/description_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
         android:background="@android:color/transparent"
         android:hint="@string/task_input_description"
-        android:textSize="18sp"
+        android:maxLines="7"
+        android:minHeight="48dp"
         android:paddingVertical="6dp"
-        tools:text="MMMMMMMMMMMMMM"
-        android:maxLines="7" />
+        android:textSize="18sp"
+        tools:text="MMMMMMMMMMMMMM" />
 
     <View style="@style/Divider" />
 
