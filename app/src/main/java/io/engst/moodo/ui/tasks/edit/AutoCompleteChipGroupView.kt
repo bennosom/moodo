@@ -2,7 +2,6 @@ package io.engst.moodo.ui.tasks.edit
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.content.res.Resources
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -20,6 +19,7 @@ import com.google.android.material.chip.Chip
 import io.engst.moodo.R
 import io.engst.moodo.model.types.Tag
 import io.engst.moodo.shared.Logger
+import io.engst.moodo.shared.dp
 import io.engst.moodo.shared.injectLogger
 import java.util.*
 import kotlin.random.Random
@@ -122,7 +122,7 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
     }
 
     private fun initEditTextView() {
-        val layoutParams = LayoutParams(WRAP_CONTENT, 48.px).apply {
+        val layoutParams = LayoutParams(WRAP_CONTENT, 48.dp).apply {
             //flexGrow = 1f
         }
         autoCompleteTextView.layoutParams = layoutParams
@@ -207,12 +207,9 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
         }
 
         val layoutParams = MarginLayoutParams(MarginLayoutParams.WRAP_CONTENT, MarginLayoutParams.WRAP_CONTENT)
-        layoutParams.rightMargin = 4.px
+        layoutParams.rightMargin = 4.dp
         addView(chip, childCount - 1, layoutParams)
     }
 }
 
 fun FlexboxLayout.getAllChips(): List<Chip> = (0 until childCount).mapNotNull { index -> getChildAt(index) as? Chip }
-
-val Int.px: Int
-    get() = (this * Resources.getSystem().displayMetrics.density).toInt()

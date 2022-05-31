@@ -67,6 +67,8 @@
         android:background="@android:color/transparent"
         android:hint="@string/task_input_description"
         android:textSize="18sp"
+        android:paddingVertical="6dp"
+        tools:text="MMMMMMMMMMMMMM"
         android:maxLines="7" />
 
     <View style="@style/Divider" />

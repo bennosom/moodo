@@ -65,8 +65,10 @@ class TaskEditViewModel(
             createdDate = LocalDateTime.now(),
             dueDate = buildDueDate(),
             isDue = false,
-            priority = 0
+            priority = 0,
+            tags = tags.value ?: emptyList()
         )
+
         vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
         GlobalScope.launch { taskRepository.addTask(newTask) }
     }

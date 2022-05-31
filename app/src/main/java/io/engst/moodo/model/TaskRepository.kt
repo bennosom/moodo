@@ -1,7 +1,6 @@
 package io.engst.moodo.model
 
 import io.engst.moodo.model.persistence.TaskDao
-import io.engst.moodo.model.persistence.entity.TagTaskEntity
 import io.engst.moodo.model.persistence.entity.TaskListOrderEntity
 import io.engst.moodo.model.types.DateShift
 import io.engst.moodo.model.types.Tag
@@ -83,13 +82,15 @@ class TaskRepository(
 
             val taskEntity = task.toEntity()
 
-            val tagEntities = task.tags.map { it.toEntity() }.toTypedArray()
-            val tagIds = taskDao.addTag(*tagEntities)
+            // update existing tags
+            val existingTags = task.tags.filter { it.id != null }
+            val existingTagEntities = existingTags.map { it.toEntity() }.toTypedArray()
 
-            val refEntities = tagIds.map { TagTaskEntity(it, taskEntity.task_id) }.toTypedArray()
-            taskDao.addTagTask(*refEntities)
+            // add new tags
+            val newTags = task.tags.filter { it.id == null }
+            val newTagEntities = newTags.map { it.toEntity() }.toTypedArray()
 
-            taskDao.addTask(taskEntity)
+            taskDao.addTaskAndTags(taskEntity, existingTagEntities, newTagEntities)
         }
     }
 
@@ -99,20 +100,15 @@ class TaskRepository(
 
             val taskEntity = task.toEntity()
 
-            val oldTagTaskEntities = taskDao.getAssociatedTags(taskEntity.task_id).toTypedArray()
-            taskDao.deleteTagTask(*oldTagTaskEntities)
+            // update existing tags
+            val existingTags = task.tags.filter { it.id != null }
+            val existingTagEntities = existingTags.map { it.toEntity() }.toTypedArray()
 
-            val tagEntities = task.tags.map {
-                it.toEntity().run {
-                    copy(tag_id = 0) // avoids SQLiteConstraintException: UNIQUE constraint failed: tag.tag_id
-                }
-            }.toTypedArray()
-            val tagIds = taskDao.addTag(*tagEntities)
+            // add new tags
+            val newTags = task.tags.filter { it.id == null }
+            val newTagEntities = newTags.map { it.toEntity() }.toTypedArray()
 
-            val tagTaskEntities = tagIds.map { TagTaskEntity(it, taskEntity.task_id) }.toTypedArray()
-            taskDao.addTagTask(*tagTaskEntities)
-
-            taskDao.updateTask(taskEntity)
+            taskDao.updateTaskAndTags(taskEntity, existingTagEntities, newTagEntities)
         }
     }
 

@@ -3,11 +3,15 @@ package io.engst.moodo.ui.tasks
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import io.engst.moodo.R
 import io.engst.moodo.databinding.TaskListItemBinding
 import io.engst.moodo.databinding.TaskListItemHeaderBinding
+import io.engst.moodo.shared.dp
 
 sealed class ListItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
@@ -43,6 +47,20 @@ sealed class ListItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
                         else context.getColor(R.color.textOnSurface)
                     )
                     text = item.task.description
+                }
+                with(tags) {
+                    removeAllViews()
+                    item.task.tags.forEach {
+                        val tagView = TextView(context)
+                        tagView.layoutParams = ViewGroup.MarginLayoutParams(12.dp, 12.dp).apply {
+                            marginStart = 4.dp
+                            marginEnd = 4.dp
+                        }
+                        tagView.background = AppCompatResources.getDrawable(context, R.drawable.task_list_item_tag_round)?.apply {
+                            setTint(it.color)
+                        }
+                        addView(tagView)
+                    }
                 }
                 with(dueDate) {
                     setTextColor(

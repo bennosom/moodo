@@ -35,8 +35,44 @@ interface TaskDao {
     @Insert
     suspend fun addTask(vararg entity: TaskEntity): List<Long>
 
+    @Transaction
+    suspend fun addTaskAndTags(taskEntity: TaskEntity, existingTagEntities: Array<TagEntity>, newTagEntities: Array<TagEntity>) {
+        // update existing tags
+        updateTag(*existingTagEntities)
+
+        // add new tags
+        val newTagIds = addTag(*newTagEntities)
+
+        val taskId = addTask(taskEntity).first()
+
+        // add refs
+        val tagTaskEntities =
+            (existingTagEntities.map { it.tag_id } + newTagIds).map { TagTaskEntity(it, taskId) }.toTypedArray()
+        addTagTask(*tagTaskEntities)
+    }
+
     @Update
     suspend fun updateTask(vararg entity: TaskEntity)
+
+    @Transaction
+    suspend fun updateTaskAndTags(taskEntity: TaskEntity, existingTagEntities: Array<TagEntity>, newTagEntities: Array<TagEntity>) {
+        // remove refs
+        val existingTagTaskEntities = getTagTasks(taskEntity.task_id).toTypedArray()
+        deleteTagTask(*existingTagTaskEntities)
+
+        // update existing tags
+        updateTag(*existingTagEntities)
+
+        // add new tags
+        val newTagIds = addTag(*newTagEntities)
+
+        // add refs
+        val tagTaskEntities =
+            (existingTagEntities.map { it.tag_id } + newTagIds).map { TagTaskEntity(it, taskEntity.task_id) }.toTypedArray()
+        addTagTask(*tagTaskEntities)
+
+        updateTask(taskEntity)
+    }
 
     @Delete
     suspend fun deleteTask(vararg entity: TaskEntity)
@@ -68,13 +104,17 @@ interface TaskDao {
     @Delete
     suspend fun deleteTag(vararg entity: TagEntity)
 
+
     // tag/task references
 
     @Query("SELECT * FROM tag_task WHERE ref_task_id == :taskId")
-    suspend fun getAssociatedTags(taskId: Long): List<TagTaskEntity>
+    suspend fun getTagTasks(taskId: Long): List<TagTaskEntity>
 
     @Insert
-    suspend fun addTagTask(vararg entity: TagTaskEntity)
+    suspend fun addTagTask(vararg entity: TagTaskEntity): List<Long>
+
+    @Update
+    suspend fun updateTagTask(vararg entity: TagTaskEntity)
 
     @Delete
     suspend fun deleteTagTask(vararg entity: TagTaskEntity)
