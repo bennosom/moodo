@@ -8,14 +8,19 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
+import android.widget.EditText
 import android.widget.Filter
+import android.widget.FrameLayout
 import androidx.annotation.ColorInt
-import com.google.android.flexbox.FlexboxLayout
+import androidx.core.view.updatePadding
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipDrawable
+import com.google.android.material.chip.ChipGroup
 import io.engst.moodo.R
 import io.engst.moodo.model.types.Tag
 import io.engst.moodo.shared.Logger
@@ -24,14 +29,15 @@ import io.engst.moodo.shared.injectLogger
 import java.util.*
 import kotlin.random.Random
 
-class AutoCompleteChipGroupView @JvmOverloads constructor(
+class AutoCompleteChipGroup @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
-) : FlexboxLayout(context, attrs, defStyle) {
+) : ChipGroup(context, attrs, defStyle) {
 
     private var callback: ((tags: List<Tag>) -> Unit)? = null
     private var currentTags: List<Tag> = emptyList()
+    private var availableTags: List<Tag> = emptyList()
 
     class AutoCompleteTagAdapter(context: Context, private val itemClickListener: (position: Int) -> Unit) :
         ArrayAdapter<Tag>(context, R.layout.tag_autocomplete_dropdown_item, mutableListOf()) {
@@ -97,9 +103,8 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
         }
     }
 
-    // TODO: try MaterialAutoCompleteTextView + AutoCompleteAdapter
-    private val autoCompleteTextView: AutoCompleteTextView = AutoCompleteTextView(context)
-    private lateinit var autoCompleteTagAdapter: AutoCompleteTagAdapter
+    private val editText: EditText = EditText(context)
+    private val chipBackground = ChipDrawable.createFromResource(context, R.xml.task_edit_tag_input_chip)
 
     init {
         initEditTextView()
@@ -109,12 +114,12 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
         currentTags = tags
         getAllChips().forEach { removeView(it) }
         currentTags.forEach { tag ->
-            addChipView(tag.name, tag.color)
+            addLeftChip(tag.name, tag.color)
         }
     }
 
     fun setAvailableTags(tags: List<Tag>) {
-        autoCompleteTagAdapter.tags = tags
+        availableTags = tags
     }
 
     fun setOnTagsChanged(block: (tags: List<Tag>) -> Unit) {
@@ -122,43 +127,36 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
     }
 
     private fun initEditTextView() {
-        val layoutParams = LayoutParams(WRAP_CONTENT, 48.dp).apply {
-            //flexGrow = 1f
-        }
-        autoCompleteTextView.layoutParams = layoutParams
-        autoCompleteTextView.setBackgroundResource(android.R.color.transparent)
-        autoCompleteTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-        autoCompleteTextView.threshold = 1
-        autoCompleteTextView.hint = resources.getText(R.string.task_tag_input_hint)
-        autoCompleteTextView.imeOptions = EditorInfo.IME_ACTION_DONE
-        autoCompleteTextView.inputType = EditorInfo.TYPE_CLASS_TEXT or EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS
-        autoCompleteTextView.maxLines = 1
-        autoCompleteTextView.setSingleLine()
+        val containerLayout = FrameLayout(context)
+        val outerLayoutParams = LayoutParams(WRAP_CONTENT, 48.dp)
+        containerLayout.layoutParams = outerLayoutParams
 
-        autoCompleteTagAdapter = AutoCompleteTagAdapter(context) { position ->
-            val tag = autoCompleteTagAdapter.getItem(position) as Tag
-            autoCompleteTextView.text = null
-            addChipView(name = tag.name)
-            currentTags = currentTags + tag
-            callback?.invoke(currentTags)
-            autoCompleteTextView.dismissDropDown()
+        val backgroundView = View(context)
+        backgroundView.layoutParams = MarginLayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
+            topMargin = 8.dp
+            bottomMargin = 8.dp
         }
-        autoCompleteTextView.setAdapter(autoCompleteTagAdapter)
+        backgroundView.background = chipBackground
+        containerLayout.addView(backgroundView)
 
-        autoCompleteTextView.setOnItemClickListener { adapterView, _, position, _ ->
-            val tag = adapterView.getItemAtPosition(position) as Tag
-            autoCompleteTextView.text = null
-            addChipView(name = tag.name)
-            currentTags = currentTags + tag
-            callback?.invoke(currentTags)
-        }
+        chipBackground.isCloseIconVisible = false
 
-        autoCompleteTextView.setOnEditorActionListener { textView, actionId, _ ->
+        editText.updatePadding(left = 36.dp, right = 16.dp)
+        editText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+        editText.lineHeight = 16.dp
+        editText.hint = resources.getText(R.string.task_tag_input_hint)
+        editText.imeOptions = EditorInfo.IME_ACTION_DONE
+        editText.inputType = EditorInfo.TYPE_CLASS_TEXT or EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS
+        editText.maxLines = 1
+        editText.setSingleLine()
+        editText.background = null
+
+        editText.setOnEditorActionListener { textView, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val text = textView.text.toString()
                 if (text.isNotBlank()) {
                     textView.text = null
-                    addChipView(name = text)
+                    addLeftChip(name = text)
                     currentTags = currentTags + Tag(name = text, color = Color.LTGRAY)
                     callback?.invoke(currentTags)
                 }
@@ -166,22 +164,72 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
             } else false
         }
 
-        /*doAfterTextChanged { text ->
-            if (text != null && text.isEmpty()) {
-                return@doAfterTextChanged
+        editText.setOnFocusChangeListener { view, hasFocus ->
+            if (hasFocus) {
+                updateSuggestedTags((view as EditText).text.toString())
+            } else {
+                getRightChips().onEach { removeView(it) }
+            }
+        }
+
+        editText.doAfterTextChanged { text ->
+            val textEntered = text?.isNotBlank() ?: false
+            chipBackground.isCloseIconVisible = textEntered // show or hide "add" icon
+
+            // make EditText as small as input text given (otherwise hint text will be taken for minimum width)
+            if (textEntered) {
+                editText.updatePadding(left = 36.dp, right = 36.dp)
+                editText.hint = null
+            } else {
+                editText.updatePadding(left = 36.dp, right = 16.dp)
+                editText.hint = resources.getText(R.string.task_tag_input_hint)
             }
 
-            // comma is detected
-            if (text?.trim()?.last() == ',') {
-                val name = text.substring(0, text.length - 1)
-                block(name)
-            }
-        }*/
+            updateSuggestedTags(text?.toString())
+        }
 
-        addView(autoCompleteTextView)
+        containerLayout.addView(editText, LayoutParams(WRAP_CONTENT, MATCH_PARENT))
+        addView(containerLayout, outerLayoutParams)
     }
 
-    private fun addChipView(name: String, @ColorInt color: Int = Color.LTGRAY) {
+    private fun updateSuggestedTags(searchText: String? = null) {
+        getRightChips().onEach { removeView(it) }
+        searchText?.let { text ->
+            if (text.isNotBlank()) {
+                availableTags
+                    .filter { tag ->
+                        !currentTags.any {
+                            it.id == tag.id
+                        }
+                    }
+                    .onEach { tag ->
+                        if (tag.name.contains(text, ignoreCase = true)) {
+                            addRightChip(name = tag.name, color = tag.color)
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun addRightChip(name: String, @ColorInt color: Int = Color.LTGRAY) {
+        val inflater = LayoutInflater.from(context)
+        val chip = inflater.inflate(R.layout.task_edit_tag_suggestion_chip, null) as Chip
+        chip.apply {
+            text = name
+            chipBackgroundColor = ColorStateList.valueOf(color)
+            setOnClickListener {
+                editText.text = null
+                currentTags = currentTags + Tag(name = name, color = color)
+                callback?.invoke(currentTags)
+            }
+        }
+
+        val layoutParams = MarginLayoutParams(MarginLayoutParams.WRAP_CONTENT, MarginLayoutParams.WRAP_CONTENT)
+        layoutParams.rightMargin = 4.dp
+        addView(chip, layoutParams)
+    }
+
+    private fun addLeftChip(name: String, @ColorInt color: Int = Color.LTGRAY) {
         val inflater = LayoutInflater.from(context)
         val chip = inflater.inflate(R.layout.task_edit_tag_chip, null) as Chip
         chip.apply {
@@ -208,8 +256,14 @@ class AutoCompleteChipGroupView @JvmOverloads constructor(
 
         val layoutParams = MarginLayoutParams(MarginLayoutParams.WRAP_CONTENT, MarginLayoutParams.WRAP_CONTENT)
         layoutParams.rightMargin = 4.dp
-        addView(chip, childCount - 1, layoutParams)
+        val editTextIndex = indexOfChild(editText.parent as View)
+        addView(chip, editTextIndex, layoutParams)
     }
+
+    private fun getRightChips(): List<Chip> = (indexOfChild(editText.parent as View) until childCount).mapNotNull { index ->
+        getChildAt(index) as? Chip
+    }
+
+    private fun getAllChips(): List<Chip> = (0 until childCount).mapNotNull { index -> getChildAt(index) as? Chip }
 }
 
-fun FlexboxLayout.getAllChips(): List<Chip> = (0 until childCount).mapNotNull { index -> getChildAt(index) as? Chip }

@@ -25,17 +25,36 @@
         tools:text="@string/task_done_at"
         tools:visibility="visible" />
 
-    <io.engst.moodo.ui.tasks.edit.AutoCompleteChipGroupView
-        android:id="@+id/autoCompleteChipGroup"
+    <HorizontalScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="start"
+        android:fadingEdge="horizontal"
+        android:fadingEdgeLength="10dp"
+        android:requiresFadingEdge="horizontal"
+        android:scrollbars="none">
+
+        <io.engst.moodo.ui.tasks.edit.AutoCompleteChipGroup
+            android:id="@+id/autoCompleteChipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="false"
+            app:singleLine="true" />
+    </HorizontalScrollView>
+
+    <View style="@style/Divider" />
+
+    <EditText
+        android:id="@+id/description_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
+        android:background="@null"
+        android:hint="@string/task_input_description"
+        android:maxLines="7"
         android:minHeight="48dp"
-        app:alignContent="space_around"
-        app:alignItems="stretch"
-        app:dividerDrawableVertical="@drawable/chip_divider"
-        app:flexWrap="wrap"
-        app:showDivider="middle" />
+        android:paddingVertical="6dp"
+        android:textSize="18sp"
+        tools:text="MMMMMMMMMMMMMM" />
 
     <View style="@style/Divider" />
 
@@ -56,20 +75,6 @@
             app:singleLine="true"
             app:singleSelection="true" />
     </HorizontalScrollView>
-
-    <View style="@style/Divider" />
-
-    <EditText
-        android:id="@+id/description_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:hint="@string/task_input_description"
-        android:maxLines="7"
-        android:minHeight="48dp"
-        android:paddingVertical="6dp"
-        android:textSize="18sp"
-        tools:text="MMMMMMMMMMMMMM" />
 
     <View style="@style/Divider" />
 

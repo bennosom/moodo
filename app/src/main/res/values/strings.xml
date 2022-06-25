@@ -38,7 +38,7 @@
     <string name="task_button_cancel">Cancel</string>
     <string name="task_button_add">Add</string>
     <string name="task_done_at">Last done at %1$s</string>
-    <string name="task_tag_input_hint">Type to add tags</string>
+    <string name="task_tag_input_hint">Search or add tags</string>
 
     <string name="due_date_picker_title">Remind at</string>
     <string name="due_date_custom">Other</string>
