@@ -3,6 +3,9 @@ package io.engst.moodo.ui.tasks.edit
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.BackgroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -141,15 +144,30 @@ class AutoCompleteChipGroup @JvmOverloads constructor(
 
         chipBackground.isCloseIconVisible = false
 
-        editText.updatePadding(left = 36.dp, right = 16.dp)
+        editText.updatePadding(left = 16.dp, right = 16.dp)
         editText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
         editText.lineHeight = 16.dp
         editText.hint = resources.getText(R.string.task_tag_input_hint)
         editText.imeOptions = EditorInfo.IME_ACTION_DONE
-        editText.inputType = EditorInfo.TYPE_CLASS_TEXT or EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS
+        editText.inputType = EditorInfo.TYPE_CLASS_TEXT
         editText.maxLines = 1
         editText.setSingleLine()
         editText.background = null
+
+        editText.setOnTouchListener { v, event ->
+            println("bexx editText: touch listener callback: ${event.x} ${v.measuredWidth}")
+
+            val textEntered = editText.text?.isNotBlank() ?: false
+            if (textEntered && event.x >= v.measuredWidth - 75) {
+                val text = editText.text.toString()
+                editText.text = null
+                addLeftChip(name = text)
+                currentTags = currentTags + Tag(name = text, color = Color.LTGRAY)
+                callback?.invoke(currentTags)
+                return@setOnTouchListener true
+            }
+            return@setOnTouchListener false
+        }
 
         editText.setOnEditorActionListener { textView, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -175,21 +193,23 @@ class AutoCompleteChipGroup @JvmOverloads constructor(
         editText.doAfterTextChanged { text ->
             val textEntered = text?.isNotBlank() ?: false
             chipBackground.isCloseIconVisible = textEntered // show or hide "add" icon
-
-            // make EditText as small as input text given (otherwise hint text will be taken for minimum width)
-            if (textEntered) {
-                editText.updatePadding(left = 36.dp, right = 36.dp)
-                editText.hint = null
-            } else {
-                editText.updatePadding(left = 36.dp, right = 16.dp)
-                editText.hint = resources.getText(R.string.task_tag_input_hint)
-            }
-
+            setEditTextChipBackground(textEntered)
             updateSuggestedTags(text?.toString())
         }
 
         containerLayout.addView(editText, LayoutParams(WRAP_CONTENT, MATCH_PARENT))
         addView(containerLayout, outerLayoutParams)
+    }
+
+    private fun setEditTextChipBackground(textEntered: Boolean) {
+        // make EditText as small as input text given (otherwise hint text will be taken for minimum width)
+        if (textEntered) {
+            editText.updatePadding(left = 16.dp, right = 36.dp)
+            editText.hint = null
+        } else {
+            editText.updatePadding(left = 16.dp, right = 16.dp)
+            editText.hint = resources.getText(R.string.task_tag_input_hint)
+        }
     }
 
     private fun updateSuggestedTags(searchText: String? = null) {
@@ -203,23 +223,32 @@ class AutoCompleteChipGroup @JvmOverloads constructor(
                         }
                     }
                     .onEach { tag ->
-                        if (tag.name.contains(text, ignoreCase = true)) {
-                            addRightChip(name = tag.name, color = tag.color)
+                        val startIndex = tag.name.indexOf(text, ignoreCase = true)
+                        if (startIndex > -1) {
+                            val endIndex = startIndex + text.length
+                            val spannableString = SpannableString(tag.name)
+                            spannableString.setSpan(
+                                BackgroundColorSpan(Color.YELLOW),
+                                startIndex,
+                                endIndex,
+                                Spannable.SPAN_INCLUSIVE_EXCLUSIVE
+                            )
+                            addRightChip(styledText = spannableString, color = tag.color)
                         }
                     }
             }
         }
     }
 
-    private fun addRightChip(name: String, @ColorInt color: Int = Color.LTGRAY) {
+    private fun addRightChip(styledText: SpannableString, @ColorInt color: Int = Color.LTGRAY) {
         val inflater = LayoutInflater.from(context)
         val chip = inflater.inflate(R.layout.task_edit_tag_suggestion_chip, null) as Chip
         chip.apply {
-            text = name
+            text = styledText
             chipBackgroundColor = ColorStateList.valueOf(color)
             setOnClickListener {
                 editText.text = null
-                currentTags = currentTags + Tag(name = name, color = color)
+                currentTags = currentTags + Tag(name = styledText.toString(), color = color)
                 callback?.invoke(currentTags)
             }
         }
